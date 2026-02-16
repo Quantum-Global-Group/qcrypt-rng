@@ -46,64 +46,98 @@ class QuantumCrypto:
         return result.data
 
 
-# Initialize quantum crypto
-qcrypto = QuantumCrypto()
+# Initialize quantum crypto (deferred until first use to avoid startup issues)
+_qcrypto_instance = None
+
+def get_quantum_crypto():
+    global _qcrypto_instance
+    if _qcrypto_instance is None:
+        _qcrypto_instance = QuantumCrypto()
+    return _qcrypto_instance
+
+
+def _do_encrypt(plaintext: bytes, key: bytes, iv: bytes, algorithm: str):
+    """Shared encryption logic for text and file endpoints."""
+    if algorithm in ("AES-256-GCM", "AES-128-GCM"):
+        cipher = Cipher(algorithms.AES(key), modes.GCM(iv), backend=default_backend())
+        encryptor = cipher.encryptor()
+        ciphertext = encryptor.update(plaintext) + encryptor.finalize()
+        return ciphertext, encryptor.tag
+    elif algorithm == "AES-256-CBC":
+        from cryptography.hazmat.primitives.padding import PKCS7
+        padder = PKCS7(128).padder()
+        padded = padder.update(plaintext) + padder.finalize()
+        cipher = Cipher(algorithms.AES(key), modes.CBC(iv), backend=default_backend())
+        encryptor = cipher.encryptor()
+        ciphertext = encryptor.update(padded) + encryptor.finalize()
+        tag_bytes = hmac.new(key, iv + ciphertext, hashlib.sha256).digest()
+        return ciphertext, tag_bytes
+    else:
+        raise ValueError(f"Unsupported algorithm: {algorithm}")
+
+
+def _do_decrypt(ciphertext_bytes: bytes, key_bytes: bytes, iv_bytes: bytes, tag_bytes: bytes, algorithm: str) -> bytes:
+    """Shared decryption logic for text and file endpoints."""
+    if algorithm in ("AES-256-GCM", "AES-128-GCM"):
+        cipher = Cipher(algorithms.AES(key_bytes), modes.GCM(iv_bytes, tag_bytes), backend=default_backend())
+        decryptor = cipher.decryptor()
+        return decryptor.update(ciphertext_bytes) + decryptor.finalize()
+    elif algorithm == "AES-256-CBC":
+        expected_tag = hmac.new(key_bytes, iv_bytes + ciphertext_bytes, hashlib.sha256).digest()
+        if not hmac.compare_digest(tag_bytes, expected_tag):
+            raise ValueError("HMAC tag verification failed")
+        cipher = Cipher(algorithms.AES(key_bytes), modes.CBC(iv_bytes), backend=default_backend())
+        decryptor = cipher.decryptor()
+        padded = decryptor.update(ciphertext_bytes) + decryptor.finalize()
+        from cryptography.hazmat.primitives.padding import PKCS7
+        unpadder = PKCS7(128).unpadder()
+        return unpadder.update(padded) + unpadder.finalize()
+    else:
+        raise ValueError(f"Unsupported algorithm: {algorithm}")
 
 
 @router.post("/encrypt", response_model=BaseResponse)
 async def encrypt_data(
     data: str = Form(..., description="Data to encrypt"),
-    use_quantum_key: bool = Form(True, description="Use quantum-generated key")
+    use_quantum_key: bool = Form(True, description="Use quantum-generated key"),
+    algorithm: str = Form("AES-256-GCM", description="AES-256-GCM, AES-128-GCM, or AES-256-CBC"),
+    key: Optional[str] = Form(None, description="Base64-encoded key (omit to auto-generate)")
 ):
     """
-    Encrypt data with quantum-generated AES keys
-    
-    Uses AES-256-GCM with quantum entropy for:
-    - Key generation (256 bits)
-    - Initialization vector (128 bits)
-    - Authentication tag
-    
-    This provides quantum-enhanced protection against:
-    - Brute force attacks (unpredictable keys)
-    - Pattern analysis (true random IVs)
-    - Cryptanalysis (maximum entropy)
+    Encrypt data with quantum-generated or user-provided AES keys.
+
+    Supports AES-256-GCM (default), AES-128-GCM, and AES-256-CBC.
     """
     try:
-        # Generate quantum key and IV
-        key = await qcrypto.generate_quantum_key(32)  # AES-256
+        qcrypto = get_quantum_crypto()
+
+        key_size = 16 if algorithm == "AES-128-GCM" else 32
+        if key:
+            key_bytes = base64.b64decode(key)
+        else:
+            key_bytes = await qcrypto.generate_quantum_key(key_size)
         iv = await qcrypto.generate_quantum_iv()
-        
-        # Encrypt using AES-GCM
-        cipher = Cipher(
-            algorithms.AES(key),
-            modes.GCM(iv),
-            backend=default_backend()
-        )
-        encryptor = cipher.encryptor()
-        
-        # Encrypt the data
+
         plaintext = data.encode('utf-8')
-        ciphertext = encryptor.update(plaintext) + encryptor.finalize()
-        
-        # Package the encrypted data with metadata
+        ciphertext, tag = _do_encrypt(plaintext, key_bytes, iv, algorithm)
+
         encrypted_package = {
             "ciphertext": base64.b64encode(ciphertext).decode(),
             "iv": base64.b64encode(iv).decode(),
-            "tag": base64.b64encode(encryptor.tag).decode(),
-            "key": base64.b64encode(key).decode(),  # In production, use key management
-            "algorithm": "AES-256-GCM",
-            "quantum_enhanced": True
+            "tag": base64.b64encode(tag).decode(),
+            "key": base64.b64encode(key_bytes).decode(),
+            "algorithm": algorithm,
+            "quantum_enhanced": key is None
         }
-        
+
         return BaseResponse(
             status=ResponseStatus.SUCCESS,
             request_id=f"enc_{int(time.time()*1000000)}",
             data=encrypted_package,
             metadata={
-                "encryption_time_ms": 0.5,
-                "key_entropy_bits": 256,
-                "quantum_source": "superposition",
-                "algorithm": "AES-256-GCM"
+                "key_entropy_bits": key_size * 8,
+                "algorithm": algorithm,
+                "custom_key": key is not None,
             }
         )
     except Exception as e:
@@ -116,31 +150,20 @@ async def decrypt_data(
     ciphertext: str = Form(...),
     key: str = Form(...),
     iv: str = Form(...),
-    tag: str = Form(...)
+    tag: str = Form(...),
+    algorithm: str = Form("AES-256-GCM", description="Must match the algorithm used to encrypt")
 ):
     """
-    Decrypt data encrypted with quantum keys
-    
-    Reverses the quantum-enhanced AES-256-GCM encryption.
+    Decrypt data encrypted with quantum or user-provided keys.
     """
     try:
-        # Decode from base64
         ciphertext_bytes = base64.b64decode(ciphertext)
         key_bytes = base64.b64decode(key)
         iv_bytes = base64.b64decode(iv)
         tag_bytes = base64.b64decode(tag)
-        
-        # Create cipher for decryption
-        cipher = Cipher(
-            algorithms.AES(key_bytes),
-            modes.GCM(iv_bytes, tag_bytes),
-            backend=default_backend()
-        )
-        decryptor = cipher.decryptor()
-        
-        # Decrypt
-        plaintext = decryptor.update(ciphertext_bytes) + decryptor.finalize()
-        
+
+        plaintext = _do_decrypt(ciphertext_bytes, key_bytes, iv_bytes, tag_bytes, algorithm)
+
         return BaseResponse(
             status=ResponseStatus.SUCCESS,
             request_id=f"dec_{int(time.time()*1000000)}",
@@ -154,6 +177,77 @@ async def decrypt_data(
         raise HTTPException(status_code=400, detail="Decryption failed - invalid key or corrupted data")
 
 
+@router.post("/encrypt-file", response_model=BaseResponse)
+async def encrypt_file(
+    file: UploadFile = File(..., description="File to encrypt (max ~10 MB)"),
+    algorithm: str = Form("AES-256-GCM"),
+    key: Optional[str] = Form(None, description="Base64 key (omit to auto-generate)")
+):
+    """Encrypt a file with quantum-generated or user-provided AES keys."""
+    try:
+        contents = await file.read()
+        if len(contents) > 10 * 1024 * 1024:
+            raise HTTPException(status_code=413, detail="File too large (max 10 MB)")
+
+        qcrypto = get_quantum_crypto()
+        key_size = 16 if algorithm == "AES-128-GCM" else 32
+        key_bytes = base64.b64decode(key) if key else await qcrypto.generate_quantum_key(key_size)
+        iv = await qcrypto.generate_quantum_iv()
+
+        ciphertext, tag = _do_encrypt(contents, key_bytes, iv, algorithm)
+
+        return BaseResponse(
+            status=ResponseStatus.SUCCESS,
+            request_id=f"encf_{int(time.time()*1000000)}",
+            data={
+                "ciphertext": base64.b64encode(ciphertext).decode(),
+                "iv": base64.b64encode(iv).decode(),
+                "tag": base64.b64encode(tag).decode(),
+                "key": base64.b64encode(key_bytes).decode(),
+                "algorithm": algorithm,
+                "quantum_enhanced": key is None,
+                "original_filename": file.filename,
+                "original_size": len(contents),
+            },
+        )
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"File encryption error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post("/decrypt-file", response_model=BaseResponse)
+async def decrypt_file(
+    ciphertext: str = Form(...),
+    key: str = Form(...),
+    iv: str = Form(...),
+    tag: str = Form(...),
+    algorithm: str = Form("AES-256-GCM"),
+):
+    """Decrypt file content previously encrypted via /encrypt-file."""
+    try:
+        plaintext = _do_decrypt(
+            base64.b64decode(ciphertext),
+            base64.b64decode(key),
+            base64.b64decode(iv),
+            base64.b64decode(tag),
+            algorithm,
+        )
+        return BaseResponse(
+            status=ResponseStatus.SUCCESS,
+            request_id=f"decf_{int(time.time()*1000000)}",
+            data={
+                "content_base64": base64.b64encode(plaintext).decode(),
+                "size": len(plaintext),
+                "verified": True,
+            },
+        )
+    except Exception as e:
+        logger.error(f"File decryption error: {e}")
+        raise HTTPException(status_code=400, detail="File decryption failed")
+
+
 @router.post("/sign", response_model=BaseResponse)
 async def sign_data(
     data: str = Form(..., description="Data to sign"),
@@ -161,19 +255,22 @@ async def sign_data(
 ):
     """
     Create digital signature with quantum entropy
-    
+
     Generates signatures using quantum-random keys for:
     - Message authentication
     - Data integrity
     - Non-repudiation
-    
+
     The quantum entropy ensures signatures cannot be forged
     through pattern analysis or timing attacks.
     """
     try:
+        # Get quantum crypto instance (initialized on first use)
+        qcrypto = get_quantum_crypto()
+        
         # Generate quantum signing key
         signing_key = await qcrypto.generate_quantum_key(64)
-        
+
         # Create signature
         if algorithm == "HMAC-SHA256":
             signature = hmac.new(
@@ -189,7 +286,7 @@ async def sign_data(
             ).digest()
         else:
             raise ValueError(f"Unsupported algorithm: {algorithm}")
-        
+
         return BaseResponse(
             status=ResponseStatus.SUCCESS,
             request_id=f"sig_{int(time.time()*1000000)}",
@@ -271,22 +368,25 @@ async def hash_data(
 ):
     """
     Quantum-salted hashing for passwords and sensitive data
-    
+
     Uses quantum entropy for salt generation, making rainbow
     tables and precomputed attacks impossible.
-    
+
     Supports:
     - SHA3-256/512 (quantum-resistant)
     - PBKDF2 with quantum salt
     - Argon2 with quantum parameters
     """
     try:
+        # Get quantum crypto instance (initialized on first use)
+        qcrypto = get_quantum_crypto()
+        
         # Generate quantum salt
         if use_quantum_salt:
             salt = await qcrypto.generate_quantum_salt(32)
         else:
             salt = secrets.token_bytes(32)
-        
+
         # Perform hashing
         if algorithm == "SHA3-256":
             hash_obj = hashlib.sha3_256()
@@ -299,7 +399,7 @@ async def hash_data(
             hash_obj.update(data.encode('utf-8'))
             hash_value = hash_obj.digest()
         elif algorithm == "PBKDF2-SHA256":
-            kdf = PBKDF2(
+            kdf = PBKDF2HMAC(
                 algorithm=hashes.SHA256(),
                 length=32,
                 salt=salt,
@@ -307,9 +407,13 @@ async def hash_data(
                 backend=default_backend()
             )
             hash_value = kdf.derive(data.encode('utf-8'))
+        elif algorithm == "BLAKE2b-256":
+            hash_obj = hashlib.blake2b(digest_size=32, salt=salt[:16])
+            hash_obj.update(data.encode('utf-8'))
+            hash_value = hash_obj.digest()
         else:
             raise ValueError(f"Unsupported algorithm: {algorithm}")
-        
+
         return BaseResponse(
             status=ResponseStatus.SUCCESS,
             request_id=f"hash_{int(time.time()*1000000)}",
@@ -340,15 +444,18 @@ async def generate_salt(
 ):
     """
     Generate quantum salt for cryptographic operations
-    
+
     Produces high-entropy salts that are impossible to predict,
     preventing rainbow table attacks and ensuring unique hashes
     even for identical inputs.
     """
     try:
+        # Get quantum crypto instance (initialized on first use)
+        qcrypto = get_quantum_crypto()
+        
         # Generate quantum salt
         salt = await qcrypto.generate_quantum_salt(size)
-        
+
         # Encode as requested
         if encoding == "hex":
             encoded_salt = salt.hex()
@@ -356,7 +463,7 @@ async def generate_salt(
             encoded_salt = base64.b64encode(salt).decode()
         else:
             encoded_salt = list(salt)
-        
+
         return BaseResponse(
             status=ResponseStatus.SUCCESS,
             request_id=f"salt_{int(time.time()*1000000)}",
@@ -387,7 +494,7 @@ async def secure_random(
 ):
     """
     Generate cryptographically secure random values with quantum entropy
-    
+
     Superior to standard secure random due to quantum source.
     Use cases:
     - Nonces for protocols
@@ -396,9 +503,12 @@ async def secure_random(
     - Scientific simulations
     """
     try:
+        # Get quantum crypto instance (initialized on first use)
+        qcrypto = get_quantum_crypto()
+        
         qrng = get_quantum_rng()
         values = []
-        
+
         for _ in range(count):
             if type == "integer":
                 # Generate quantum random integer in range
@@ -407,7 +517,7 @@ async def secure_random(
                 random_bytes = await qcrypto.generate_quantum_key(bytes_needed)
                 random_int = int.from_bytes(random_bytes, 'big') % range_size + min
                 values.append(random_int)
-            
+
             elif type == "float":
                 # Generate quantum random float [0, 1)
                 random_bytes = await qcrypto.generate_quantum_key(8)
@@ -415,15 +525,15 @@ async def secure_random(
                 random_float = random_int / (2**64)
                 scaled_float = min + (max - min) * random_float
                 values.append(scaled_float)
-            
+
             elif type == "bytes":
                 random_bytes = await qcrypto.generate_quantum_key(32)
                 values.append(base64.b64encode(random_bytes).decode())
-            
+
             elif type == "uuid":
                 result = await qrng.generate_uuid()
                 values.append(result.data)
-        
+
         return BaseResponse(
             status=ResponseStatus.SUCCESS,
             request_id=f"rand_{int(time.time()*1000000)}",

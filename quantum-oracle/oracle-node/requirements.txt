@@ -1,0 +1,28 @@
+# Quantum Randomness Oracle - Backend Requirements
+
+# Blockchain interaction
+web3==6.15.1
+eth-account==0.10.0
+
+# Async programming
+asyncio==3.4.3
+
+# Cryptography
+cryptography==41.0.7
+
+# Configuration
+python-dotenv==1.0.0
+
+# Testing
+pytest==7.4.3
+pytest-asyncio==0.21.1
+
+# Logging
+loguru==0.7.2
+
+# Type hints
+typing-extensions==4.8.0
+
+# Local project dependencies (these would be installed separately)
+# For now, we'll reference the existing qcrypt-rng project
+-e /home/roc/quantumGlobalGroup/qcrypt-rng

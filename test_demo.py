@@ -5,7 +5,6 @@ Run this to verify all demo components are working
 
 import asyncio
 import httpx
-import json
 from typing import Dict, Any
 
 # API base URL

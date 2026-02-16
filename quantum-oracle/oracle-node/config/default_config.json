@@ -1,0 +1,13 @@
+{
+  "blockchain_rpc_url": "https://sepolia.infura.io/v3/YOUR_INFURA_PROJECT_ID",
+  "contract_address": "0x0000000000000000000000000000000000000000",
+  "private_key": "0x0000000000000000000000000000000000000000000000000000000000000000",
+  "is_poa_network": false,
+  "fulfillment_gas_limit": 200000,
+  "commit_reveal_delay": 2,
+  "polling_interval": 15,
+  "quantum_backend": "qrisp_simulator",
+  "log_level": "INFO",
+  "max_pending_requests": 100,
+  "gas_price_buffer": 1.2
+}

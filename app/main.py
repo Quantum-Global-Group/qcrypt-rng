@@ -3,6 +3,8 @@ QCrypt RNG - Main FastAPI Application
 Quantum-Enhanced Cybersecurity Platform with Post-Quantum Cryptography
 """
 
+import sys
+
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
@@ -10,10 +12,19 @@ from contextlib import asynccontextmanager
 import time
 
 from app.config import settings
-from app.utils.logging import setup_logging, logger, get_performance_logger
+from app.utils.logging import setup_logging, logger, get_performance_logger, get_security_logger
+from app.utils.middleware import rate_limit_middleware, api_key_middleware, monitoring_middleware
 from app.api.v2.endpoints import generate, quantum, health
 # Import new endpoints for demo
 from app.api.v2.endpoints import protect, blockchain, pqc_endpoints
+# Import monitoring endpoints
+from app.api.v2.endpoints import monitoring
+# Import hardware interface endpoints
+from app.api.v2.endpoints import hardware
+# Import quantum randomness oracle endpoints
+from app.api.v2.endpoints import oracle
+# Import quantum VRF endpoints
+from app.api.v2.endpoints import vrf
 from app.api.v2.models.responses import ErrorResponse
 
 
@@ -23,10 +34,20 @@ async def lifespan(app: FastAPI):
     """Manage application lifecycle"""
     # Startup
     setup_logging()
+
+    # Enforce a real SECRET_KEY in production
+    if settings.is_production and settings.secret_key == "your-secret-key-here-change-in-production":
+        logger.critical(
+            "FATAL: SECRET_KEY is still the default placeholder. "
+            "Set the SECRET_KEY environment variable to a secure value (>= 32 chars) before running in production."
+        )
+        sys.exit(1)
+
     logger.info("🚀 QCrypt RNG API Starting...")
     logger.info(f"Version: {settings.app_version}")
     logger.info(f"Backend: {settings.quantum_backend}")
     logger.info(f"Debug: {settings.debug}")
+    logger.info(f"Environment: {settings.environment}")
     logger.info("✅ Protection endpoints loaded")
     logger.info("✅ Post-Quantum Cryptography loaded")
     logger.info("✅ Blockchain demo loaded")
@@ -39,40 +60,47 @@ async def lifespan(app: FastAPI):
 
 # Create FastAPI app
 app = FastAPI(
-    title=settings.app_name + " - Quantum Security Platform",
+    title=settings.app_name + " - Quantum-Enhanced Security Platform",
     description="""
-    🔐 **QCrypt RNG** - Complete Quantum-Enhanced Cybersecurity Platform
-    
-    ## 🎯 Demo Features
-    
-    ### 🛡️ Current Threat Protection
-    - Quantum-enhanced encryption (AES with quantum keys)
-    - Unhackable session tokens
-    - Quantum-salted password hashing
-    - Digital signatures with quantum entropy
-    
+    🔐 **QCrypt RNG** - Quantum-Simulation Random Number Generation with Hardware Integration Pathways
+
+    ## 🎯 Platform Features
+
+    ### 🛡️ Quantum-Enhanced Security
+    - Quantum-simulation enhanced encryption (AES with quantum-enhanced keys)
+    - Quantum-enhanced session tokens with true randomness simulation
+    - Quantum-enhanced password hashing with simulated quantum entropy
+    - Digital signatures with quantum-enhanced randomness
+
     ### ⚡ Post-Quantum Cryptography
     - **KYBER**: Quantum-safe encryption (NIST standard)
     - **DILITHIUM**: Quantum-safe signatures (NIST standard)
     - **FALCON**: Compact quantum-safe signatures
     - Hybrid mode for transition period
-    
-    ### ⛓️ Blockchain Demonstration
+
+    ### 🔬 Quantum Simulation Engine
+    - Real-time quantum circuit simulation for random number generation
+    - Hardware abstraction layer for seamless transition to real quantum devices
+    - Performance benchmarking between simulation and hardware modes
+    - Quantum entropy validation and statistical analysis
+
+    ### ⛓️ Blockchain Security Analysis
     - Live blockchain with vulnerable (RSA/ECDSA) signatures
     - Shor's algorithm attack simulation
     - Quantum-safe blockchain with Dilithium signatures
     - Side-by-side security comparison
-    
+
     ## 🚨 The Quantum Threat
     - RSA-2048: Breakable in 8 hours with 4096 qubits
     - Bitcoin/Ethereum: $2.1 trillion at risk
     - Timeline: Major vulnerabilities by 2030
-    
+
     ## ✅ The QCrypt Solution
-    - Quantum entropy for unbreakable randomness
+    - Quantum-simulation for high-quality randomness (ready for real quantum hardware)
     - NIST-approved post-quantum algorithms
     - Complete protection against Shor's algorithm
     - Ready for both current and future threats
+    - Modular architecture for hardware integration
     """,
     version="2.0.0-demo",
     docs_url="/docs",
@@ -82,14 +110,53 @@ app = FastAPI(
 )
 
 
-# Configure CORS (open for demo)
+# Add middleware in the right order
+app.middleware("http")(monitoring_middleware)
+app.middleware("http")(api_key_middleware)
+app.middleware("http")(rate_limit_middleware)
+
+# Configure CORS using the allowed_origins list from settings
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Allow all origins for demo
+    allow_origins=settings.allowed_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+# Security headers middleware
+@app.middleware("http")
+async def add_security_headers(request: Request, call_next):
+    """Add standard security hardening headers to every response."""
+    response = await call_next(request)
+
+    response.headers["X-Content-Type-Options"] = "nosniff"
+    response.headers["X-Frame-Options"] = "DENY"
+    response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
+    response.headers["Permissions-Policy"] = "geolocation=(), camera=(), microphone=()"
+
+    if settings.is_production:
+        response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
+        response.headers["Content-Security-Policy"] = "default-src 'self'"
+
+    return response
+
+
+# Request body size limit middleware
+@app.middleware("http")
+async def enforce_body_size_limit(request: Request, call_next):
+    """Reject requests whose Content-Length exceeds the configured limit."""
+    content_length = request.headers.get("content-length")
+    if content_length and int(content_length) > settings.max_request_body_size_bytes:
+        return JSONResponse(
+            status_code=413,
+            content={
+                "error": "payload_too_large",
+                "message": f"Request body exceeds the {settings.max_request_body_size_bytes} byte limit."
+            }
+        )
+    return await call_next(request)
 
 
 # Request timing middleware
@@ -191,6 +258,34 @@ app.include_router(
     blockchain.router,
     prefix=f"{settings.api_prefix}/blockchain",
     tags=["Blockchain Demo"]
+)
+
+# Monitoring and analytics
+app.include_router(
+    monitoring.router,
+    prefix=f"{settings.api_prefix}/monitoring",
+    tags=["Monitoring & Analytics"]
+)
+
+# Quantum hardware interface
+app.include_router(
+    hardware.router,
+    prefix=f"{settings.api_prefix}/hardware",
+    tags=["Quantum Hardware Interface"]
+)
+
+# Quantum randomness oracle
+app.include_router(
+    oracle.router,
+    prefix=f"{settings.api_prefix}/oracle",
+    tags=["Quantum Randomness Oracle"]
+)
+
+# Quantum VRF (verifiable random function)
+app.include_router(
+    vrf.router,
+    prefix=f"{settings.api_prefix}/oracle",
+    tags=["Quantum VRF"]
 )
 
 # Health check

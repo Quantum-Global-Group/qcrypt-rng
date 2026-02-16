@@ -1,6 +1,6 @@
 """
 QCrypt RNG - Core Quantum Random Number Generator
-Enterprise-grade quantum random number generation using Qrisp framework
+Enterprise-grade quantum random number generation with hardware interface support
 """
 
 from typing import Optional, List, Dict, Any, Tuple
@@ -18,9 +18,18 @@ try:
     QRISP_AVAILABLE = True
 except ImportError:
     QRISP_AVAILABLE = False
-    logger.warning("Qrisp not available. Using fallback quantum simulation.")
+    logger.info("Qrisp not available. Using quantum simulation.")
 
 from app.config import settings
+from app.utils.monitoring import track_quantum_generation
+from app.quantum.hardware_interface import (
+    get_quantum_hardware_manager,
+    QuantumHardwareManager,
+    SimulatedQRNG,
+    PhotonicQRNG,
+    SuperconductingQRNG,
+    QuantumMeasurement
+)
 
 
 @dataclass
@@ -55,19 +64,20 @@ class EntropyAnalysis:
 class QuantumRNG:
     """
     Enterprise-grade Quantum Random Number Generator
-    
+
     Features:
-    - True quantum randomness using superposition
-    - Multiple backend support (Qrisp, IBM, IQM, Rigetti)
+    - Quantum-simulation and hardware-ready randomness
+    - Multiple backend support (Qrisp, real quantum hardware)
     - Entropy pool management
     - Statistical validation
     - Post-processing for cryptographic quality
+    - Hardware abstraction layer for seamless transition
     """
-    
+
     def __init__(self, backend: Optional[str] = None):
         """
         Initialize Quantum RNG
-        
+
         Args:
             backend: Quantum backend to use (default from settings)
         """
@@ -77,24 +87,43 @@ class QuantumRNG:
         self.generation_count = 0
         self.min_entropy_threshold = settings.min_entropy_threshold
         self.pool_size = settings.entropy_pool_size
+
+        # Initialize quantum hardware manager
+        self.hardware_manager: QuantumHardwareManager = get_quantum_hardware_manager()
         
         # Initialize quantum backend
         self._initialize_backend()
-        
+
         # Statistics tracking
         self.total_bytes_generated = 0
         self.total_generation_time = 0
-        
+
         logger.info(f"QuantumRNG initialized with backend: {self.backend}")
-    
+
     def _initialize_backend(self):
         """Initialize the quantum backend"""
-        if self.backend == "qrisp_simulator" and QRISP_AVAILABLE:
+        if self.backend == "qrisp_simulator":
+            # Initialize simulated quantum hardware
             self.backend_instance = "qrisp"
+            # Add simulated device to hardware manager - defer to async method
+            self._default_device_added = False
+        elif self.backend.startswith("hardware_"):
+            # Initialize connection to real hardware based on type
+            if "photonic" in self.backend:
+                device = PhotonicQRNG(self.backend_config.get("device_address", "default"))
+            elif "superconducting" in self.backend:
+                device = SuperconductingQRNG(self.backend_config.get("device_address", "default"))
+            else:
+                device = SimulatedQRNG("fallback")
+            
+            # Add device to hardware manager - defer to async method
+            self._default_device_added = False
+            self.backend_instance = "hardware"
         else:
-            # Fallback to classical simulation with warning
-            logger.warning(f"Backend {self.backend} not fully initialized, using simulation")
+            # Fallback to classical simulation
+            logger.info(f"Using simulation backend: {self.backend}")
             self.backend_instance = "simulation"
+            self._default_device_added = False
     
     async def generate_bytes(
         self,
@@ -103,59 +132,75 @@ class QuantumRNG:
         output_format: str = "hex"
     ) -> QuantumGenerationResult:
         """
-        Generate cryptographically secure random bytes using quantum superposition
-        
+        Generate cryptographically secure random bytes using quantum simulation or hardware
+
         Args:
             num_bytes: Number of random bytes to generate (1-10240)
             num_qubits: Number of qubits to use (1-16)
             output_format: Output format (hex, base64, array, raw)
-        
+
         Returns:
             QuantumGenerationResult with generated data
         """
+        # Add default device if not already added
+        if not hasattr(self, '_default_device_added') or not self._default_device_added:
+            await self._add_default_device()
+            self._default_device_added = True
+
         start_time = time.time()
         request_id = self._generate_request_id()
-        
+
         # Validate inputs
         num_bytes = self._validate_byte_count(num_bytes)
         num_qubits = self._validate_qubit_count(num_qubits)
-        
+
         logger.debug(f"Generating {num_bytes} bytes with {num_qubits} qubits")
-        
+
         # Generate quantum random bytes
         random_bytes = bytearray()
         measurement_count = 0
-        
+
         while len(random_bytes) < num_bytes:
-            # Generate quantum randomness
-            if QRISP_AVAILABLE and self.backend_instance == "qrisp":
-                quantum_value = self._generate_quantum_qrisp(num_qubits)
+            # Generate quantum randomness using hardware abstraction
+            if self.backend_instance in ["qrisp", "hardware"]:
+                # Use hardware interface for quantum measurements
+                quantum_measurement = await self.hardware_manager.measure_qubits(num_qubits)
+                quantum_value = quantum_measurement.value
             else:
+                # Fallback to classical simulation
                 quantum_value = self._generate_quantum_simulation(num_qubits)
-            
+
             measurement_count += 1
-            
+
             # Post-process for cryptographic quality
             processed_bytes = self._post_process(quantum_value, num_qubits)
-            
+
             # Add to byte array
             bytes_to_add = min(len(processed_bytes), num_bytes - len(random_bytes))
             random_bytes.extend(processed_bytes[:bytes_to_add])
-            
+
             # Update entropy pool
             self._update_entropy_pool(quantum_value)
-        
+
         # Format output
         result_bytes = bytes(random_bytes)
         formatted_output = self._format_output(result_bytes, output_format)
-        
+
         # Calculate metrics
         generation_time_ms = (time.time() - start_time) * 1000
         self.total_bytes_generated += num_bytes
         self.total_generation_time += generation_time_ms
-        
-        logger.info(f"Generated {num_bytes} bytes in {generation_time_ms:.2f}ms")
-        
+
+        logger.info(f"Generated {num_bytes} bytes in {generation_time_ms:.2f}ms using {self.backend_instance} backend")
+
+        # Track quantum generation metrics
+        track_quantum_generation(
+            algorithm="quantum_random",
+            qubits_used=num_qubits,
+            generation_time=generation_time_ms / 1000.0,  # Convert to seconds for metrics
+            entropy_bits=num_bytes * 8
+        )
+
         return QuantumGenerationResult(
             data=formatted_output,
             format=output_format,
@@ -167,6 +212,20 @@ class QuantumRNG:
             measurement_count=measurement_count,
             request_id=request_id
         )
+
+    async def _add_default_device(self):
+        """Add default quantum device to hardware manager"""
+        if self.backend == "qrisp_simulator":
+            await self.hardware_manager.add_device("simulated_default", SimulatedQRNG("qrisp"))
+        elif self.backend.startswith("hardware_"):
+            if "photonic" in self.backend:
+                device = PhotonicQRNG(self.backend_config.get("device_address", "default"))
+            elif "superconducting" in self.backend:
+                device = SuperconductingQRNG(self.backend_config.get("device_address", "default"))
+            else:
+                device = SimulatedQRNG("fallback")
+            
+            await self.hardware_manager.add_device("real_hardware", device)
     
     def _generate_quantum_qrisp(self, num_qubits: int) -> int:
         """Generate quantum random number using Qrisp"""

@@ -1,0 +1,53 @@
+version: '3.8'
+
+services:
+  api:
+    build: .
+    ports:
+      - "8000:8000"
+    environment:
+      - ENVIRONMENT=production
+      - DEBUG=false
+      - DATABASE_URL=postgresql://qcrypt:password@db:5432/qcrypt_db
+      - REDIS_URL=redis://redis:6379/0
+      - REQUIRE_API_KEY=true
+      - ENABLE_USAGE_TRACKING=true
+      - LOG_LEVEL=INFO
+    depends_on:
+      - db
+      - redis
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  db:
+    image: postgres:15-alpine
+    environment:
+      - POSTGRES_DB=qcrypt_db
+      - POSTGRES_USER=qcrypt
+      - POSTGRES_PASSWORD=password
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    restart: unless-stopped
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+
+  dashboard:
+    build: .
+    ports:
+      - "8501:8501"
+    command: streamlit run dashboard.py --server.address 0.0.0.0 --server.port 8501
+    environment:
+      - API_BASE_URL=http://api:8000/api/v2
+    depends_on:
+      - api
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
