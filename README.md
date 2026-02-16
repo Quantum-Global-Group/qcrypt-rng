@@ -1,6 +1,5 @@
 ---
 title: QCrypt RNG
-emoji: "\U0001F510"
 colorFrom: indigo
 colorTo: purple
 sdk: docker
@@ -8,69 +7,33 @@ app_port: 7860
 pinned: false
 ---
 
-# QCrypt RNG - Quantum Security and Blockchain Resilience Platform
+# QCrypt RNG
 
-Enterprise-grade quantum-enhanced random number generation, post-quantum cryptography, blockchain security tools, and a verifiable random function (VRF) oracle -- with a real-time web dashboard and comprehensive REST API.
+**Quantum-enhanced random number generation, post-quantum cryptography, and blockchain security.**
 
-## Overview
+QCrypt RNG is a platform for cryptographically secure randomness and quantum-resistant security. It provides a REST API and web dashboard for quantum-backed entropy, NIST-standard post-quantum algorithms, a verifiable random function (VRF) oracle for blockchains, data protection tools, and threat intelligence. The stack runs as a single Docker image and is deployable to cloud or Hugging Face Spaces.
 
-QCrypt RNG provides cryptographically secure randomness using quantum simulation with pathways for real quantum hardware integration. The platform covers five areas:
+**Live demo:** [Hugging Face Spaces](https://huggingface.co/spaces/rocRevyAreGoals15/qcrypt-rng)
 
-- **Blockchain Security** -- Quantum-safe wallets, quantum VRF (verifiable random function) with commit-reveal, and multi-chain oracle support.
-- **Data Protection** -- AES encryption (GCM/CBC) with quantum keys, file encryption, HMAC signing, quantum-salted hashing, and NIST post-quantum cryptography (DILITHIUM/KYBER).
-- **Key and Entropy Tools** -- Random bytes, cryptographic keys, UUIDs, passwords, session tokens, and batch generation with configurable qubit counts.
-- **Threat Intelligence** -- Algorithm vulnerability scanning, quantum attack simulation, blockchain comparison, and oracle benchmarking.
-- **Network Status** -- Real-time health monitoring, entropy quality metrics, hardware device status, and oracle request tracking.
+---
 
-## Key Features
+## What it does
 
-### Quantum Randomness
-- Random bytes, keys, UUIDs, passwords, and session tokens with quantum-enhanced entropy
-- Batch generation with parallel processing for high-volume use cases
-- Configurable qubit counts (8/12/16) and output formats (hex, base64, array, PEM)
+- **Quantum randomness** — Random bytes, keys, UUIDs, passwords, and session tokens with configurable qubit counts (8/12/16) and batch generation.
+- **Quantum VRF** — Verifiable random function with a one-time quantum seed, Keccak-256 commitment (Ethereum-compatible), and commit–reveal flow; supports Ethereum, Polygon, BSC, Avalanche, Fantom.
+- **Post-quantum cryptography** — DILITHIUM2/3/5 signatures and KYBER512/768/1024 key exchange with threat assessment and migration guidance.
+- **Data protection** — AES-256-GCM, AES-128-GCM, AES-256-CBC (quantum or user-supplied keys); file encryption; HMAC sign/verify; quantum-salted hashing (SHA3, PBKDF2, BLAKE2b).
+- **Blockchain security** — Quantum-safe vs classical wallet comparison, Shor-based attack simulation, chain comparison, demo mining, and oracle randomness (single and batch).
+- **Threat intelligence** — Algorithm vulnerability scanning, oracle benchmarking, and qubit-to-break estimates.
+- **Operations** — Health checks, entropy quality and hardware status, monitoring metrics; optional rate limiting and API key auth.
 
-### Quantum VRF (Verifiable Random Function)
-- One-time quantum seed with Keccak-256 commitment (Ethereum-compatible)
-- Deterministic output per input (alpha) with full verifiability
-- 3-step flow: seed, prove, reveal -- anyone can verify after reveal
-- Multi-chain support: Ethereum, Polygon, BSC, Avalanche, Fantom
+---
 
-### Post-Quantum Cryptography
-- DILITHIUM2/3/5 signatures and KYBER512/768/1024 key exchange (NIST-standardized)
-- Generate, sign, and verify with quantum-resistant algorithms
-- Algorithm threat assessment with qubits-to-break and migration recommendations
+## Quick start
 
-### Data Protection
-- AES-256-GCM, AES-128-GCM, and AES-256-CBC encryption with quantum or custom keys
-- File encryption up to 10 MB with original filename preservation
-- HMAC-SHA256/SHA512 signing with standalone verification
-- Quantum-salted hashing: SHA3-256, SHA3-512, PBKDF2-SHA256, BLAKE2b-256
-- Password hashing with configurable iterations (10k-1M)
+**Prerequisites:** Python 3.8+, Node.js 18+ (for the dashboard), pip.
 
-### Blockchain Security
-- Classical vs quantum-safe wallet comparison (ECDSA vs DILITHIUM)
-- Quantum attack simulation (Shor's algorithm on RSA/ECDSA)
-- Side-by-side blockchain comparison and demo mining
-- Oracle randomness requests with commit-reveal and batch support
-
-### Hardware Integration
-- Hardware abstraction layer for photonic and superconducting quantum devices
-- Same API for both simulation and real hardware modes
-- Device status monitoring and performance benchmarking
-
-### Enterprise Features
-- Rate limiting (Free/Pro/Enterprise tiers), API key management, usage tracking
-- Real-time monitoring and analytics
-- Docker and Kubernetes deployment ready
-
-## Quick Start
-
-### Prerequisites
-- Python 3.8+
-- Node.js 18+ (for the web dashboard)
-- pip package manager
-
-### Backend (API Server)
+**Backend:**
 
 ```bash
 git clone <repository-url>
@@ -79,9 +42,9 @@ pip install -r requirements.txt
 python run_api.py
 ```
 
-The API server starts on http://localhost:8000. Interactive API docs at http://localhost:8000/docs.
+API: http://localhost:8000 — Interactive docs: http://localhost:8000/docs
 
-### Frontend (Web Dashboard)
+**Frontend:**
 
 ```bash
 cd quantum-oracle-ui
@@ -89,131 +52,65 @@ npm install
 npm run dev
 ```
 
-The dashboard starts on http://localhost:3000. It auto-discovers the API on ports 8000-8004, or set `NEXT_PUBLIC_API_BASE_URL`.
+Dashboard: http://localhost:3000 (auto-discovers API on ports 8000–8004, or set `NEXT_PUBLIC_API_BASE_URL`).
 
-### Production Deployment
+**Production:** See [PRODUCTION.md](PRODUCTION.md). For Docker: `docker-compose up -d` or Kubernetes via `./deploy.sh`.
 
-```bash
-docker-compose up -d
-# or Kubernetes
-./deploy.sh
-```
+**Hugging Face Spaces:** The root `Dockerfile` is built for Spaces (Nginx + FastAPI + Next.js on port 7860). Create a Docker Space, add the Space as a remote, and push `main`; use a [HF token](https://huggingface.co/settings/tokens) with write access when prompted. The app will be available at your Space URL after the build completes.
 
-See [PRODUCTION.md](PRODUCTION.md) for full deployment instructions.
+---
 
-### Deploy to Hugging Face Spaces
+## Web dashboard
 
-The root `Dockerfile` is built for Hugging Face Spaces (Nginx + FastAPI + Next.js on port 7860). To deploy:
+The dashboard has five sections and an in-app Docs link:
 
-1. Create a new [Space](https://huggingface.co/new-space) with **Docker** SDK.
-2. Clone your Space and push this repo (or add the Space as a remote and push):
+| Section | Capabilities |
+|--------|----------------|
+| Blockchain Security | Wallet creation, VRF proof generation and verification, supported chains |
+| Data Protection | Encrypt/decrypt (text and file), sign/verify, hash, PQC key generation and sign/verify |
+| Key and Entropy Tools | Random bytes, keys, UUIDs, passwords, tokens, batch generation, oracle requests |
+| Threat Intelligence | Algorithm scanning, attack simulation, blockchain comparison, benchmarks |
+| Network Status | Platform health, entropy quality, hardware status, oracle request lookup |
 
-   ```bash
-   git remote add space https://huggingface.co/spaces/YOUR_USERNAME/qcrypt-rng
-   git push space main
-   ```
-   Use a [HF token](https://huggingface.co/settings/tokens) with write access when prompted for password.
+Each card includes an info popover; collapsible sections are used for dense workflows.
 
-3. The Space builds and runs automatically. The app will be at `https://YOUR_USERNAME-qcrypt-rng.hf.space`.
+---
 
-## Web Dashboard
+## API reference
 
-The dashboard at `/` has five tabs with a "Docs" link in the header for in-app documentation:
+Base path: `/api/v2`.
 
-| Tab | What it does |
-|-----|-------------|
-| **Blockchain Security** | Create wallets, generate/verify VRF proofs, supported chains display |
-| **Data Protection** | Encrypt/decrypt (text + file), sign/verify, hash, PQC key gen + sign/verify |
-| **Key and Entropy Tools** | Random bytes, keys, UUIDs, passwords, tokens, batch generation, oracle requests |
-| **Threat Intelligence** | Algorithm scanning, attack simulation, blockchain comparison, benchmarks |
-| **Network Status** | Platform health, entropy quality, hardware status, oracle request lookup |
+| Area | Endpoints |
+|------|-----------|
+| **Generation** | `POST /generate/bytes`, `/generate/key`, `/generate/uuid`, `/generate/password`, `/generate/token`, `/generate/batch` |
+| **Data Protection** | `POST /protect/encrypt`, `/protect/decrypt`, `/protect/encrypt-file`, `/protect/decrypt-file`, `/protect/sign`, `/protect/verify`, `/protect/hash`, `/protect/salt` |
+| **Post-quantum** | `POST /pqc/generate`, `/pqc/sign`, `/pqc/verify`; `GET /pqc/algorithms`, `/pqc/info`; `POST /pqc/threat-assessment` |
+| **Oracle and VRF** | `POST /oracle/request`, `/oracle/requests/batch`; `GET /oracle/status/:id`, `/oracle/network-info`, `/oracle/benchmark`; `POST /oracle/vrf/seed`, `/oracle/vrf/prove`, `/oracle/vrf/reveal`, `/oracle/vrf/verify` |
+| **Blockchain** | `POST /blockchain/create-wallet`, `/blockchain/sign-transaction`, `/blockchain/simulate-attack`, `/blockchain/verify-quantum-safe`, `/blockchain/mine-block`; `GET /blockchain/compare-blockchains` |
+| **System** | `GET /health`, `/quantum/entropy`, `/quantum/stats`; `POST /quantum/reseed`; `GET /hardware/devices`, `/monitoring/metrics` |
 
-Every card has an **(i)** info popover with a description and use cases. Collapsible sections keep the interface clean.
+Full interactive API docs: http://localhost:8000/docs (or `/swagger` when running behind the bundled Nginx).
 
-## API Reference
+---
 
-All endpoints are under `/api/v2`.
+## Stack
 
-### Generation
-| Endpoint | Description |
-|----------|-------------|
-| `POST /generate/bytes` | Random bytes (hex/base64/array) |
-| `POST /generate/key` | AES/RSA/ECDSA keys (base64/hex/pem) |
-| `POST /generate/uuid` | Quantum UUIDs (up to 50) |
-| `POST /generate/password` | Configurable passwords with strength analysis |
-| `POST /generate/token` | Session tokens with expiry |
-| `POST /generate/batch` | Batch random bytes (parallel) |
+- **Backend:** FastAPI, Uvicorn, Python 3.8+
+- **Frontend:** Next.js 16, React, TypeScript, Tailwind CSS
+- **Quantum:** QRisp-style simulation; hardware abstraction for photonic/superconducting devices
+- **Crypto:** PyCryptodome (Keccak-256), `cryptography` (AES/RSA/ECDSA), liboqs-python (DILITHIUM/KYBER)
+- **Deployment:** Docker (single image for Spaces), Docker Compose, Kubernetes
 
-### Data Protection
-| Endpoint | Description |
-|----------|-------------|
-| `POST /protect/encrypt` | AES encrypt text (GCM/CBC, custom key) |
-| `POST /protect/decrypt` | AES decrypt text |
-| `POST /protect/encrypt-file` | AES encrypt file (up to 10 MB) |
-| `POST /protect/decrypt-file` | Decrypt file |
-| `POST /protect/sign` | HMAC-SHA256/512 sign |
-| `POST /protect/verify` | HMAC verify |
-| `POST /protect/hash` | Quantum-salted hash (SHA3/PBKDF2/BLAKE2b) |
-| `POST /protect/salt` | Generate quantum salt |
-
-### Post-Quantum Cryptography
-| Endpoint | Description |
-|----------|-------------|
-| `POST /pqc/generate` | DILITHIUM/KYBER key pairs |
-| `POST /pqc/sign` | PQC signature |
-| `POST /pqc/verify` | PQC verification |
-| `GET /pqc/algorithms` | List supported algorithms |
-| `POST /pqc/threat-assessment` | Algorithm risk assessment |
-| `GET /pqc/info` | PQC system info |
-
-### Oracle and VRF
-| Endpoint | Description |
-|----------|-------------|
-| `POST /oracle/request` | Request quantum randomness (with target_chain) |
-| `POST /oracle/requests/batch` | Batch oracle requests |
-| `GET /oracle/status/:id` | Check request fulfillment |
-| `GET /oracle/network-info` | Oracle network status |
-| `GET /oracle/benchmark` | Performance benchmark |
-| `POST /oracle/vrf/seed` | Create quantum VRF seed |
-| `POST /oracle/vrf/prove` | Compute VRF output |
-| `POST /oracle/vrf/reveal` | Reveal seed for verification |
-| `POST /oracle/vrf/verify` | Verify VRF proof |
-
-### Blockchain
-| Endpoint | Description |
-|----------|-------------|
-| `POST /blockchain/create-wallet` | Classical + quantum-safe wallets |
-| `POST /blockchain/sign-transaction` | Sign with ECDSA and DILITHIUM |
-| `POST /blockchain/simulate-attack` | Shor's algorithm simulation |
-| `POST /blockchain/verify-quantum-safe` | Verify PQC signature |
-| `GET /blockchain/compare-blockchains` | Security comparison |
-| `POST /blockchain/mine-block` | Demo block mining |
-
-### System
-| Endpoint | Description |
-|----------|-------------|
-| `GET /health` | Health check |
-| `GET /quantum/entropy` | Entropy analysis |
-| `GET /quantum/stats` | Generation statistics |
-| `POST /quantum/reseed` | Reseed entropy pool |
-| `GET /hardware/devices` | Quantum hardware status |
-| `GET /monitoring/metrics` | System metrics |
-
-## Technology Stack
-
-- **Backend**: FastAPI, Uvicorn, Python 3.8+
-- **Frontend**: Next.js 16, React, TypeScript, Tailwind CSS
-- **Quantum**: QRisp simulation, hardware abstraction layer
-- **Cryptography**: PyCryptodome (Keccak-256), cryptography (AES/RSA/ECDSA), liboqs-python (DILITHIUM/KYBER)
-- **Deployment**: Docker, Kubernetes, Docker Compose
+---
 
 ## Documentation
 
-- **In-App Docs**: Available at `/docs` in the web dashboard
-- **[Production Guide](PRODUCTION.md)**: Deployment instructions
-- **[API Documentation](http://localhost:8000/docs)**: Interactive Swagger UI
-- **[Python SDK](client_sdk/python/README.md)**: Python client library
+- In-app documentation: `/docs` in the web dashboard
+- [PRODUCTION.md](PRODUCTION.md) — deployment and operations
+- [Python SDK](client_sdk/python/README.md) — client library
+
+---
 
 ## License
 
-This project is licensed under the MIT License.
+MIT License.
