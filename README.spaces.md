@@ -26,27 +26,15 @@ Interactive demo of a quantum-enhanced random number generation, post-quantum cr
 
 1. Create a new Space at [huggingface.co/new-space](https://huggingface.co/new-space) with **Docker** SDK.
 
-2. Clone this repo and prepare it for Spaces:
-
-   ```bash
-   git clone <your-repo-url> qcrypt-rng
-   cd qcrypt-rng
-
-   # Rename Spaces-specific files
-   cp Dockerfile.spaces Dockerfile
-   cp README.spaces.md README.md
-   ```
-
-3. Push to your Space:
+2. Push this repo to your Space (the root `Dockerfile` and `README.md` are already configured for Spaces):
 
    ```bash
    git remote add space https://huggingface.co/spaces/YOUR_USERNAME/qcrypt-rng
-   git add -A
-   git commit -m "Deploy to HF Spaces"
    git push space main
    ```
+   Use a [HF token](https://huggingface.co/settings/tokens) with write access as the password.
 
-4. HF Spaces builds the Docker image and deploys automatically. The app will be available at `https://YOUR_USERNAME-qcrypt-rng.hf.space`.
+3. HF Spaces builds the Docker image and deploys automatically. The app will be at `https://YOUR_USERNAME-qcrypt-rng.hf.space`.
 
 ### Architecture
 

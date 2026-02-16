@@ -1,3 +1,13 @@
+---
+title: QCrypt RNG
+emoji: "\U0001F510"
+colorFrom: indigo
+colorTo: purple
+sdk: docker
+app_port: 7860
+pinned: false
+---
+
 # QCrypt RNG - Quantum Security and Blockchain Resilience Platform
 
 Enterprise-grade quantum-enhanced random number generation, post-quantum cryptography, blockchain security tools, and a verifiable random function (VRF) oracle -- with a real-time web dashboard and comprehensive REST API.
@@ -90,6 +100,21 @@ docker-compose up -d
 ```
 
 See [PRODUCTION.md](PRODUCTION.md) for full deployment instructions.
+
+### Deploy to Hugging Face Spaces
+
+The root `Dockerfile` is built for Hugging Face Spaces (Nginx + FastAPI + Next.js on port 7860). To deploy:
+
+1. Create a new [Space](https://huggingface.co/new-space) with **Docker** SDK.
+2. Clone your Space and push this repo (or add the Space as a remote and push):
+
+   ```bash
+   git remote add space https://huggingface.co/spaces/YOUR_USERNAME/qcrypt-rng
+   git push space main
+   ```
+   Use a [HF token](https://huggingface.co/settings/tokens) with write access when prompted for password.
+
+3. The Space builds and runs automatically. The app will be at `https://YOUR_USERNAME-qcrypt-rng.hf.space`.
 
 ## Web Dashboard
 

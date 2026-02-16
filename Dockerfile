@@ -1,36 +1,70 @@
-# Use an official Python runtime as a parent image
-FROM python:3.11-slim
+# Hugging Face Spaces: Nginx + FastAPI + Next.js on port 7860
+# See Dockerfile.spaces for the same file kept in sync.
 
-# Set environment variables
-ENV PYTHONDONTWRITEBYTECODE 1
-ENV PYTHONUNBUFFERED 1
+FROM python:3.11-slim AS base
 
-# Set work directory
-WORKDIR /app
-
-# Install system dependencies
-RUN apt-get update \
-    && apt-get install -y --no-install-recommends \
-        build-essential \
-        gcc \
+# System packages: nginx, curl, Node.js 20
+RUN apt-get update && apt-get install -y --no-install-recommends \
+        build-essential gcc nginx curl ca-certificates gnupg \
+    && mkdir -p /etc/apt/keyrings \
+    && curl -fsSL https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key \
+       | gpg --dearmor -o /etc/apt/keyrings/nodesource.gpg \
+    && echo "deb [signed-by=/etc/apt/keyrings/nodesource.gpg] https://deb.nodesource.com/node_20.x nodistro main" \
+       > /etc/apt/sources.list.d/nodesource.list \
+    && apt-get update && apt-get install -y --no-install-recommends nodejs \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy requirements first to leverage Docker cache
+WORKDIR /app
+
+# ── Python dependencies ──────────────────────────────────────────────
 COPY requirements.txt /app/
+# Install Python deps; skip liboqs-python if it fails (PQC falls back to simulation)
+RUN pip install --no-cache-dir --upgrade pip \
+    && grep -v 'liboqs' requirements.txt > /tmp/reqs.txt \
+    && pip install --no-cache-dir -r /tmp/reqs.txt \
+    || pip install --no-cache-dir fastapi uvicorn[standard] pydantic pydantic-settings \
+       cryptography pycryptodome numpy scipy loguru python-multipart python-dotenv
 
-# Install Python dependencies
-RUN pip install --upgrade pip && pip install -r requirements.txt
+# ── Next.js build ────────────────────────────────────────────────────
+COPY quantum-oracle-ui/package.json quantum-oracle-ui/package-lock.json* /app/quantum-oracle-ui/
+WORKDIR /app/quantum-oracle-ui
+RUN npm ci --prefer-offline 2>/dev/null || npm install
 
-# Copy project
-COPY . /app/
+COPY quantum-oracle-ui/ /app/quantum-oracle-ui/
+RUN npm run build
 
-# Create non-root user
-RUN adduser --disabled-password --gecos '' appuser
-RUN chown -R appuser:appuser /app
-USER appuser
+# Copy standalone static assets (Next.js standalone mode needs these)
+RUN cp -r .next/static .next/standalone/.next/static 2>/dev/null || true
+RUN cp -r public .next/standalone/public 2>/dev/null || true
 
-# Expose port
-EXPOSE 8000
+# ── Backend + configs ────────────────────────────────────────────────
+WORKDIR /app
+COPY app/ /app/app/
+COPY run_api.py /app/
+COPY nginx.spaces.conf /etc/nginx/conf.d/default.conf
+COPY start-spaces.sh /app/start-spaces.sh
 
-# Run the application
-CMD ["python", "run_api.py"]
+# Remove the default nginx site
+RUN rm -f /etc/nginx/sites-enabled/default
+
+# ── Nginx writable dirs for non-root ─────────────────────────────────
+RUN mkdir -p /tmp/nginx /var/log/nginx /var/lib/nginx/body \
+    && chown -R 1000:1000 /tmp/nginx /var/log/nginx /var/lib/nginx \
+    && sed -i 's|/run/nginx.pid|/tmp/nginx/nginx.pid|g' /etc/nginx/nginx.conf \
+    && chmod +x /app/start-spaces.sh
+
+# ── HF Spaces requires user with UID 1000 ───────────────────────────
+RUN useradd -m -u 1000 spacesuser \
+    && chown -R 1000:1000 /app
+USER 1000
+
+# ── Environment ──────────────────────────────────────────────────────
+ENV REQUIRE_API_KEY=false \
+    ENVIRONMENT=production \
+    DEBUG=false \
+    LOG_LEVEL=INFO \
+    PYTHONUNBUFFERED=1
+
+EXPOSE 7860
+
+CMD ["/app/start-spaces.sh"]
