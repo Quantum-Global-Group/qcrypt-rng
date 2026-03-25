@@ -7,6 +7,7 @@ from fastapi import APIRouter, HTTPException, Depends, BackgroundTasks
 from typing import List
 import asyncio
 from datetime import datetime, timedelta
+import time
 
 from app.quantum.qrng import get_quantum_rng
 from app.api.v2.models.requests import (
@@ -28,6 +29,7 @@ from app.api.v2.models.responses import (
 )
 from app.utils.logging import logger, log_quantum_generation
 from app.config import settings
+from app.monitoring import QRNGMetrics
 
 
 router = APIRouter()
@@ -37,24 +39,34 @@ router = APIRouter()
 async def generate_bytes(request: GenerateBytesRequest) -> GenerateBytesResponse:
     """
     Generate quantum random bytes
-    
+
     This endpoint generates cryptographically secure random bytes using quantum superposition.
     Each byte is generated through quantum measurement of qubits in superposition state.
-    
+
     - **length**: Number of bytes to generate (1-1024, enterprise up to 10240)
     - **format**: Output format (hex, base64, array, raw)
     - **quantum_bits**: Number of qubits to use (1-16, higher = more entropy)
     """
     try:
         qrng = get_quantum_rng()
-        
+        start_time = time.time()
+
         # Generate quantum random bytes
         result = await qrng.generate_bytes(
             request.length,
             request.quantum_bits,
             request.format.value
         )
-        
+
+        # Record metrics
+        duration = time.time() - start_time
+        QRNGMetrics.record_bytes_generated(
+            result.quantum_backend,
+            result.format,
+            result.length
+        )
+        QRNGMetrics.record_generation_duration(result.quantum_backend, duration)
+
         # Log generation
         log_quantum_generation(
             bytes_generated=result.length,
@@ -62,7 +74,7 @@ async def generate_bytes(request: GenerateBytesRequest) -> GenerateBytesResponse
             backend=result.quantum_backend,
             time_ms=result.generation_time_ms
         )
-        
+
         return GenerateBytesResponse(
             status=ResponseStatus.SUCCESS,
             request_id=result.request_id,

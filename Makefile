@@ -13,10 +13,10 @@ install:
 	pip install -r requirements.txt
 
 test:
-	python test_qrng.py
+	pytest
 
 run:
-	python test_qrng.py
+	python scripts/start.py
 
 clean:
 	find . -type d -name "__pycache__" -exec rm -rf {} + 2>/dev/null || true

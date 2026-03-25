@@ -14,7 +14,7 @@ pnpm dev
 bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+The dev server uses **port 3040** by default (see `find-port.js`; it scans upward if that port is busy — avoids colliding with other apps on 3000). Open the URL printed in the terminal (e.g. [http://localhost:3040](http://localhost:3040)).
 
 You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
 

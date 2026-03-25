@@ -251,3 +251,58 @@ export interface BatchOracleRequestItem {
   fee_required?: number;
   status: string;
 }
+
+// Kyber KEM types
+export interface KemKeypairResponse {
+  public_key: string;
+  private_key: string;
+  algorithm: string;
+  nist_level: number;
+  encoding: string;
+  key_sizes?: { public_key_bytes: number; private_key_bytes: number };
+}
+
+export interface KemEncapsulateResponse {
+  ciphertext: string;
+  shared_secret: string;
+  algorithm: string;
+  encoding: string;
+  sizes?: { ciphertext_bytes: number; shared_secret_bytes: number };
+}
+
+export interface KemDecapsulateResponse {
+  shared_secret: string;
+  algorithm: string;
+  encoding: string;
+}
+
+// Oracle fulfillment types
+export interface FulfillmentChainConfig {
+  chain: string;
+  configured: boolean;
+  rpc_url: string;
+  chain_id: number;
+  explorer_url: string;
+}
+
+export interface FulfillmentRequestStatus {
+  request_id: string;
+  chain: string;
+  status: string;
+  /** Some API responses use this field instead of `status`. */
+  fulfillment_status?: string;
+  commitment_hash?: string | null;
+  reveal_tx_hash?: string | null;
+  randomness?: string | null;
+  explorer_url?: string;
+  error?: string | null;
+  created_at?: string;
+}
+
+export interface FulfillmentRequestItem {
+  request_id: string;
+  chain: string;
+  status: string;
+  contract_address?: string;
+  created_at?: string;
+}

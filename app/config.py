@@ -109,6 +109,40 @@ class Settings(BaseSettings):
     log_file: str = Field(default="logs/qcrypt.log", env="LOG_FILE")
     enable_detailed_logging: bool = Field(default=False, env="ENABLE_DETAILED_LOGGING")
 
+    # Oracle Contract Addresses (Testnets)
+    oracle_contract_sepolia: Optional[str] = Field(default=None, env="ORACLE_CONTRACT_SEPOLIA")
+    oracle_contract_polygon_amoy: Optional[str] = Field(default=None, env="ORACLE_CONTRACT_POLYGON_AMOY")
+    oracle_contract_bsc_testnet: Optional[str] = Field(default=None, env="ORACLE_CONTRACT_BSC_TESTNET")
+    oracle_contract_avalanche_fuji: Optional[str] = Field(default=None, env="ORACLE_CONTRACT_AVALANCHE_FUJI")
+    oracle_contract_fantom_testnet: Optional[str] = Field(default=None, env="ORACLE_CONTRACT_FANTOM_TESTNET")
+
+    # Testnet RPC Configuration
+    testnet_rpc_sepolia: str = Field(default="https://rpc.sepolia.org", env="TESTNET_RPC_SEPOLIA")
+    testnet_rpc_polygon_amoy: str = Field(default="https://rpc.amoy.polygon.technology", env="TESTNET_RPC_POLYGON_AMOY")
+    testnet_rpc_bsc_testnet: str = Field(default="https://data-seed-prebsc-1-s1.binance.org:8545", env="TESTNET_RPC_BSC_TESTNET")
+    testnet_rpc_avalanche_fuji: str = Field(default="https://api.avax-test.network/ext/bc/C/rpc", env="TESTNET_RPC_AVALANCHE_FUJI")
+    testnet_rpc_fantom_testnet: str = Field(default="https://rpc.testnet.fantom.network", env="TESTNET_RPC_FANTOM_TESTNET")
+
+    # Testnet Chain IDs
+    testnet_chain_id_sepolia: int = Field(default=11155111, env="TESTNET_CHAIN_ID_SEPOLIA")
+    testnet_chain_id_polygon_amoy: int = Field(default=80002, env="TESTNET_CHAIN_ID_POLYGON_AMOY")
+    testnet_chain_id_bsc_testnet: int = Field(default=97, env="TESTNET_CHAIN_ID_BSC_TESTNET")
+    testnet_chain_id_avalanche_fuji: int = Field(default=43113, env="TESTNET_CHAIN_ID_AVALANCHE_FUJI")
+    testnet_chain_id_fantom_testnet: int = Field(default=4002, env="TESTNET_CHAIN_ID_FANTOM_TESTNET")
+
+    # Testnet Explorer URLs
+    testnet_explorer_sepolia: str = Field(default="https://sepolia.etherscan.io", env="TESTNET_EXPLORER_SEPOLIA")
+    testnet_explorer_polygon_amoy: str = Field(default="https://amoy.polygonscan.com", env="TESTNET_EXPLORER_POLYGON_AMOY")
+    testnet_explorer_bsc_testnet: str = Field(default="https://testnet.bscscan.com", env="TESTNET_EXPLORER_BSC_TESTNET")
+    testnet_explorer_avalanche_fuji: str = Field(default="https://testnet.snowtrace.io", env="TESTNET_EXPLORER_AVALANCHE_FUJI")
+    testnet_explorer_fantom_testnet: str = Field(default="https://testnet.ftmscan.com", env="TESTNET_EXPLORER_FANTOM_TESTNET")
+
+    # Stripe Billing
+    stripe_secret_key: Optional[str] = Field(default=None, env="STRIPE_SECRET_KEY")
+    stripe_webhook_secret: Optional[str] = Field(default=None, env="STRIPE_WEBHOOK_SECRET")
+    stripe_price_id_pro: Optional[str] = Field(default=None, env="STRIPE_PRICE_ID_PRO")
+    stripe_price_id_enterprise: Optional[str] = Field(default=None, env="STRIPE_PRICE_ID_ENTERPRISE")
+
     # Performance Settings
     max_workers: int = Field(default=4, env="MAX_WORKERS")
     connection_pool_size: int = Field(default=20, env="CONNECTION_POOL_SIZE")
@@ -228,6 +262,56 @@ class Settings(BaseSettings):
     def is_development(self) -> bool:
         """Check if running in development environment"""
         return self.environment.lower() == "development"
+
+    @property
+    def testnet_oracle_config(self) -> dict:
+        """Get testnet oracle configuration"""
+        return {
+            "sepolia": {
+                "contract_address": self.oracle_contract_sepolia,
+                "rpc_url": self.testnet_rpc_sepolia,
+                "chain_id": self.testnet_chain_id_sepolia,
+                "explorer_url": self.testnet_explorer_sepolia,
+                "currency_symbol": "SepoliaETH"
+            },
+            "polygon_amoy": {
+                "contract_address": self.oracle_contract_polygon_amoy,
+                "rpc_url": self.testnet_rpc_polygon_amoy,
+                "chain_id": self.testnet_chain_id_polygon_amoy,
+                "explorer_url": self.testnet_explorer_polygon_amoy,
+                "currency_symbol": "MATIC"
+            },
+            "bsc_testnet": {
+                "contract_address": self.oracle_contract_bsc_testnet,
+                "rpc_url": self.testnet_rpc_bsc_testnet,
+                "chain_id": self.testnet_chain_id_bsc_testnet,
+                "explorer_url": self.testnet_explorer_bsc_testnet,
+                "currency_symbol": "tBNB"
+            },
+            "avalanche_fuji": {
+                "contract_address": self.oracle_contract_avalanche_fuji,
+                "rpc_url": self.testnet_rpc_avalanche_fuji,
+                "chain_id": self.testnet_chain_id_avalanche_fuji,
+                "explorer_url": self.testnet_explorer_avalanche_fuji,
+                "currency_symbol": "AVAX"
+            },
+            "fantom_testnet": {
+                "contract_address": self.oracle_contract_fantom_testnet,
+                "rpc_url": self.testnet_rpc_fantom_testnet,
+                "chain_id": self.testnet_chain_id_fantom_testnet,
+                "explorer_url": self.testnet_explorer_fantom_testnet,
+                "currency_symbol": "FTM"
+            }
+        }
+
+    def get_testnet_oracle_config(self, network: str) -> dict:
+        """Get configuration for a specific testnet"""
+        config = self.testnet_oracle_config.get(network.lower())
+        if not config:
+            raise ValueError(f"Unknown testnet: {network}")
+        if not config["contract_address"]:
+            raise ValueError(f"Contract address not configured for {network}")
+        return config
 
     def generate_secure_secret_key(self) -> str:
         """Generate a secure secret key for production use"""

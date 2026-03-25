@@ -1,5 +1,20 @@
 import { useEffect, useState } from 'react';
-import { createBlockchainWallet, createVrfSeed, getOracleNetworkInfo, vrfProve, vrfReveal, vrfVerify } from '@/utils/api';
+import {
+  configureFulfillmentChain,
+  createBlockchainWallet,
+  createFulfillmentRequest,
+  createVrfSeed,
+  getFulfillmentChains,
+  getFulfillmentStatus,
+  getOracleNetworkInfo,
+  listFulfillmentRequests,
+  retryFulfillment,
+  vrfProve,
+  vrfReveal,
+  vrfVerify,
+} from '@/utils/api';
+import type { ConfigureFulfillmentChainParams } from '@/utils/api';
+import type { FulfillmentRequestItem, FulfillmentRequestStatus } from '@/types';
 import { Badge, CopyButton, DataRows, InfoPopover, KVRow, MonoValue } from './ui';
 
 export const QuantumOracle = () => {
@@ -25,6 +40,25 @@ export const QuantumOracle = () => {
   const [verifyOutput, setVerifyOutput] = useState('');
   const [verifySeed, setVerifySeed] = useState('');
   const [verifyResult, setVerifyResult] = useState<{ valid: boolean; commitment_valid: boolean; output_valid: boolean } | null>(null);
+
+  // On-chain fulfillment (collapsible, default closed)
+  const [fulfillmentOpen, setFulfillmentOpen] = useState(false);
+  const [fulfillmentConfigOpen, setFulfillmentConfigOpen] = useState(false);
+  const [fulfillmentChain, setFulfillmentChain] = useState('ethereum');
+  const [fulfillmentRpcUrl, setFulfillmentRpcUrl] = useState('');
+  const [fulfillmentPrivateKey, setFulfillmentPrivateKey] = useState('');
+  const [fulfillmentExplorerUrl, setFulfillmentExplorerUrl] = useState('');
+  const [fulfillmentChainId, setFulfillmentChainId] = useState(1);
+  const [fulfillmentCurrency, setFulfillmentCurrency] = useState('ETH');
+  const [fulfillmentContract, setFulfillmentContract] = useState('');
+  const [fulfillmentNumBytes, setFulfillmentNumBytes] = useState(32);
+  const [fulfillmentNumQubits, setFulfillmentNumQubits] = useState(16);
+  const [fulfillmentAsync, setFulfillmentAsync] = useState(true);
+  const [fulfillmentRequestId, setFulfillmentRequestId] = useState('');
+  const [fulfillmentStatusResult, setFulfillmentStatusResult] = useState<FulfillmentRequestStatus | null>(null);
+  const [fulfillmentList, setFulfillmentList] = useState<FulfillmentRequestItem[]>([]);
+  const [fulfillmentChains, setFulfillmentChains] = useState<unknown>(null);
+  const [fulfillmentCreateResult, setFulfillmentCreateResult] = useState<{ request_id: string; fulfillment_status: string } | null>(null);
 
   useEffect(() => {
     getOracleNetworkInfo()
@@ -106,6 +140,91 @@ export const QuantumOracle = () => {
       setVerifyResult(response.data);
     } catch (e) {
       setError(e instanceof Error ? e.message : 'VRF verification failed');
+    } finally {
+      setLoadingAction(null);
+    }
+  };
+
+  // Fulfillment handlers
+  const handleConfigureChain = async () => {
+    setError(null);
+    setLoadingAction('fulfill-config');
+    try {
+      const params: ConfigureFulfillmentChainParams = {
+        chain: fulfillmentChain,
+        rpc_url: fulfillmentRpcUrl,
+        private_key: fulfillmentPrivateKey,
+        explorer_url: fulfillmentExplorerUrl,
+        chain_id: fulfillmentChainId,
+        currency_symbol: fulfillmentCurrency,
+      };
+      await configureFulfillmentChain(params);
+      setFulfillmentChains(await getFulfillmentChains());
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Chain configuration failed');
+    } finally {
+      setLoadingAction(null);
+    }
+  };
+
+  const handleCreateFulfillmentRequest = async () => {
+    if (!fulfillmentChain || !fulfillmentContract) return;
+    setError(null);
+    setFulfillmentCreateResult(null);
+    setLoadingAction('fulfill-create');
+    try {
+      const response = await createFulfillmentRequest({
+        chain: fulfillmentChain,
+        contract_address: fulfillmentContract,
+        num_bytes: fulfillmentNumBytes,
+        num_qubits: fulfillmentNumQubits,
+        async_fulfillment: fulfillmentAsync,
+      });
+      setFulfillmentCreateResult({ request_id: response.data.request_id, fulfillment_status: response.data.fulfillment_status });
+      setFulfillmentRequestId(response.data.request_id);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Create fulfillment request failed');
+    } finally {
+      setLoadingAction(null);
+    }
+  };
+
+  const handleFulfillmentStatus = async () => {
+    if (!fulfillmentRequestId.trim()) return;
+    setError(null);
+    setLoadingAction('fulfill-status');
+    try {
+      const response = await getFulfillmentStatus(fulfillmentRequestId.trim());
+      setFulfillmentStatusResult(response.data);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Status lookup failed');
+    } finally {
+      setLoadingAction(null);
+    }
+  };
+
+  const handleListFulfillmentRequests = async () => {
+    setError(null);
+    setLoadingAction('fulfill-list');
+    try {
+      const response = await listFulfillmentRequests();
+      setFulfillmentList(response.data?.requests ?? []);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'List requests failed');
+      setFulfillmentList([]);
+    } finally {
+      setLoadingAction(null);
+    }
+  };
+
+  const handleRetryFulfillment = async (reqId: string) => {
+    setError(null);
+    setLoadingAction(`fulfill-retry-${reqId}`);
+    try {
+      await retryFulfillment(reqId);
+      await handleListFulfillmentRequests();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Retry failed');
     } finally {
       setLoadingAction(null);
     }
@@ -276,6 +395,163 @@ export const QuantumOracle = () => {
             )}
           </div>
         </div>
+
+      {/* ── On-Chain Fulfillment ───────────────────────────────── */}
+      <div className="border-t border-slate-700/40 pt-6">
+        <button
+          onClick={() => setFulfillmentOpen((o) => !o)}
+          className="flex items-center gap-2 w-full text-left"
+        >
+          <span className="text-slate-500 text-xs shrink-0">{fulfillmentOpen ? '\u25BC' : '\u25B6'}</span>
+          <h2 className="text-lg font-bold text-white flex items-center gap-2">On-Chain Fulfillment <InfoPopover title="On-Chain Fulfillment" description="Submit quantum randomness requests to blockchain oracle contracts. Configure chain connection, create requests, and track commit-reveal fulfillment on Ethereum, Polygon, BSC, Avalanche, or Fantom." useCases={['Deploy oracle randomness to smart contracts', 'Track on-chain fulfillment status', 'Retry failed fulfillments']} /></h2>
+        </button>
+        {fulfillmentOpen && (
+          <div className="space-y-6 pt-4">
+            <p className="text-amber-400/90 text-sm font-medium">Demo only. Never use production keys. Private keys are sent to the API server.</p>
+
+            {/* Configure Chain */}
+            <div className="section space-y-3">
+              <button onClick={() => setFulfillmentConfigOpen((o) => !o)} className="flex items-center gap-2 text-slate-300">
+                <span className="text-xs">{fulfillmentConfigOpen ? '\u25BC' : '\u25B6'}</span>
+                <h3 className="font-semibold">Configure Chain</h3>
+              </button>
+              {fulfillmentConfigOpen && (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  <div>
+                    <label className="label">Chain</label>
+                    <select value={fulfillmentChain} onChange={(e) => setFulfillmentChain(e.target.value)} className="field">
+                      <option value="ethereum">Ethereum</option>
+                      <option value="polygon">Polygon</option>
+                      <option value="bsc">BSC</option>
+                      <option value="avalanche">Avalanche</option>
+                      <option value="fantom">Fantom</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="label">RPC URL</label>
+                    <input type="text" value={fulfillmentRpcUrl} onChange={(e) => setFulfillmentRpcUrl(e.target.value)} placeholder="https://..." className="field" />
+                  </div>
+                  <div className="md:col-span-2">
+                    <label className="label">Private Key (masked)</label>
+                    <input type="password" value={fulfillmentPrivateKey} onChange={(e) => setFulfillmentPrivateKey(e.target.value)} placeholder="0x..." className="field" />
+                  </div>
+                  <div>
+                    <label className="label">Explorer URL</label>
+                    <input type="text" value={fulfillmentExplorerUrl} onChange={(e) => setFulfillmentExplorerUrl(e.target.value)} placeholder="https://etherscan.io" className="field" />
+                  </div>
+                  <div>
+                    <label className="label">Chain ID</label>
+                    <input type="number" value={fulfillmentChainId} onChange={(e) => setFulfillmentChainId(Number(e.target.value))} className="field" />
+                  </div>
+                  <div>
+                    <label className="label">Currency</label>
+                    <input type="text" value={fulfillmentCurrency} onChange={(e) => setFulfillmentCurrency(e.target.value)} placeholder="ETH" className="field" />
+                  </div>
+                  <div className="md:col-span-2">
+                    <button onClick={handleConfigureChain} disabled={!fulfillmentRpcUrl || !fulfillmentPrivateKey || loadingAction === 'fulfill-config'} className="btn-secondary">
+                      {loadingAction === 'fulfill-config' ? 'Configuring...' : 'Configure Chain'}
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Create Request */}
+            <div className="section space-y-3">
+              <h3 className="font-semibold text-white">Create Request</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <div>
+                  <label className="label">Chain</label>
+                  <select value={fulfillmentChain} onChange={(e) => setFulfillmentChain(e.target.value)} className="field">
+                    <option value="ethereum">Ethereum</option>
+                    <option value="polygon">Polygon</option>
+                    <option value="bsc">BSC</option>
+                    <option value="avalanche">Avalanche</option>
+                    <option value="fantom">Fantom</option>
+                  </select>
+                </div>
+                <div className="md:col-span-2">
+                  <label className="label">Contract Address</label>
+                  <input type="text" value={fulfillmentContract} onChange={(e) => setFulfillmentContract(e.target.value)} placeholder="0x..." className="field" />
+                </div>
+                <div>
+                  <label className="label">Num Bytes</label>
+                  <input type="number" value={fulfillmentNumBytes} onChange={(e) => setFulfillmentNumBytes(Number(e.target.value))} className="field" />
+                </div>
+                <div>
+                  <label className="label">Num Qubits</label>
+                  <input type="number" value={fulfillmentNumQubits} onChange={(e) => setFulfillmentNumQubits(Number(e.target.value))} className="field" />
+                </div>
+                <div className="flex items-center gap-2">
+                  <input type="checkbox" id="fulfill-async" checked={fulfillmentAsync} onChange={(e) => setFulfillmentAsync(e.target.checked)} className="rounded" />
+                  <label htmlFor="fulfill-async" className="text-sm text-slate-400">Async fulfillment</label>
+                </div>
+                <div>
+                  <button onClick={handleCreateFulfillmentRequest} disabled={!fulfillmentContract || loadingAction === 'fulfill-create'} className="btn-primary">
+                    {loadingAction === 'fulfill-create' ? 'Creating...' : 'Create Request'}
+                  </button>
+                </div>
+              </div>
+              {fulfillmentCreateResult && (
+                <div className="space-y-1 pt-2">
+                  <KVRow label="Request ID" value={fulfillmentCreateResult.request_id} mono />
+                  <KVRow label="Status" value={fulfillmentCreateResult.fulfillment_status} />
+                </div>
+              )}
+            </div>
+
+            {/* Status Lookup */}
+            <div className="section space-y-3">
+              <h3 className="font-semibold text-white">Status Lookup</h3>
+              <div className="flex gap-2 flex-wrap">
+                <input type="text" value={fulfillmentRequestId} onChange={(e) => setFulfillmentRequestId(e.target.value)} placeholder="Request ID" className="field flex-1 min-w-[200px]" />
+                <button onClick={handleFulfillmentStatus} disabled={!fulfillmentRequestId.trim() || loadingAction === 'fulfill-status'} className="btn-secondary">
+                  {loadingAction === 'fulfill-status' ? 'Checking...' : 'Check Status'}
+                </button>
+              </div>
+              {fulfillmentStatusResult && (
+                <div className="space-y-2 pt-2">
+                  <KVRow label="Status" value={fulfillmentStatusResult.status} />
+                  {fulfillmentStatusResult.commitment_hash && <KVRow label="Commitment" value={fulfillmentStatusResult.commitment_hash} mono />}
+                  {fulfillmentStatusResult.reveal_tx_hash && <KVRow label="Reveal TX" value={fulfillmentStatusResult.reveal_tx_hash} mono />}
+                  {fulfillmentStatusResult.randomness && <MonoValue label="Randomness" value={fulfillmentStatusResult.randomness} truncate={60} />}
+                  {fulfillmentStatusResult.explorer_url && (
+                    <a href={fulfillmentStatusResult.explorer_url} target="_blank" rel="noopener noreferrer" className="text-indigo-400 hover:underline text-sm">View on Explorer</a>
+                  )}
+                </div>
+              )}
+            </div>
+
+            {/* List Requests */}
+            <div className="section space-y-3">
+              <h3 className="font-semibold text-white">All Requests</h3>
+              <button onClick={handleListFulfillmentRequests} disabled={loadingAction === 'fulfill-list'} className="btn-secondary">
+                {loadingAction === 'fulfill-list' ? 'Loading...' : 'List Requests'}
+              </button>
+              {fulfillmentList.length > 0 && (
+                <div className="space-y-2">
+                  {fulfillmentList.map((r) => (
+                    <div key={r.request_id} className="flex items-center justify-between gap-3 p-2 rounded bg-slate-800/50">
+                      <div>
+                        <span className="text-slate-300 font-mono text-sm">{r.request_id}</span>
+                        <span className="text-slate-500 text-xs ml-2">{r.chain}</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Badge label={r.status} />
+                        {r.status.toLowerCase() === 'failed' && (
+                          <button onClick={() => handleRetryFulfillment(r.request_id)} disabled={loadingAction === `fulfill-retry-${r.request_id}`} className="btn-ghost text-xs">
+                            Retry
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+      </div>
 
         {/* Education: Classical VRF vs Quantum-backed */}
         <div className="section space-y-3 mt-6">

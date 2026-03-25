@@ -6,6 +6,9 @@ import {
   encryptFile,
   generatePQCKey,
   hashData,
+  kemDecapsulate,
+  kemEncapsulate,
+  kemGenerate,
   signData,
   signPqc,
   verifyDataSignature,
@@ -63,10 +66,20 @@ export const Protect = () => {
   // PQC
   const [pqcAlgorithm, setPqcAlgorithm] = useState('DILITHIUM3');
   const [pqcEncoding, setPqcEncoding] = useState<'base64' | 'hex'>('base64');
-  const [pqcKeypair, setPqcKeypair] = useState<{ public_key: string; private_key: string; algorithm: string; nist_level: number; key_sizes: { public_key_bytes: number; private_key_bytes: number } } | null>(null);
+  const [pqcKeypair, setPqcKeypair] = useState<{ public_key: string; private_key: string; algorithm: string; nist_level: number; key_sizes?: { public_key_bytes: number; private_key_bytes: number } } | null>(null);
   const [pqcSignMessage, setPqcSignMessage] = useState('');
   const [pqcSignature, setPqcSignature] = useState<{ signature: string; algorithm: string; signature_size_bytes: number } | null>(null);
   const [pqcVerifyResult, setPqcVerifyResult] = useState<boolean | null>(null);
+
+  // Kyber KEM
+  const [kemAlgorithm, setKemAlgorithm] = useState<'KYBER512' | 'KYBER768' | 'KYBER1024'>('KYBER768');
+  const [kemEncoding, setKemEncoding] = useState<'base64' | 'hex'>('base64');
+  const [kemKeypair, setKemKeypair] = useState<{ public_key: string; private_key: string; algorithm: string } | null>(null);
+  const [kemSenderPubkey, setKemSenderPubkey] = useState('');
+  const [kemEncapsulateResult, setKemEncapsulateResult] = useState<{ ciphertext: string; shared_secret: string; algorithm: string } | null>(null);
+  const [kemCiphertext, setKemCiphertext] = useState('');
+  const [kemRecipientPrivkey, setKemRecipientPrivkey] = useState('');
+  const [kemDecapsulateResult, setKemDecapsulateResult] = useState<{ shared_secret: string } | null>(null);
 
   const [loadingAction, setLoadingAction] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -272,6 +285,54 @@ export const Protect = () => {
       setLoadingAction(null);
     }
   };
+
+  // Kyber KEM handlers
+  const onKemGenerate = async () => {
+    setError(null);
+    setKemEncapsulateResult(null);
+    setKemDecapsulateResult(null);
+    setLoadingAction('kem-gen');
+    try {
+      const response = await kemGenerate(kemAlgorithm, kemEncoding);
+      setKemKeypair(response.data);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Kyber KEM key generation failed');
+    } finally {
+      setLoadingAction(null);
+    }
+  };
+
+  const onKemEncapsulate = async () => {
+    if (!kemSenderPubkey.trim()) return;
+    setError(null);
+    setKemDecapsulateResult(null);
+    setLoadingAction('kem-encap');
+    try {
+      const response = await kemEncapsulate(kemSenderPubkey.trim(), kemAlgorithm, kemEncoding);
+      setKemEncapsulateResult(response.data);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Kyber encapsulation failed');
+    } finally {
+      setLoadingAction(null);
+    }
+  };
+
+  const onKemDecapsulate = async () => {
+    if (!kemCiphertext.trim() || !kemRecipientPrivkey.trim()) return;
+    setError(null);
+    setLoadingAction('kem-decap');
+    try {
+      const response = await kemDecapsulate(kemCiphertext.trim(), kemRecipientPrivkey.trim(), kemAlgorithm, kemEncoding);
+      setKemDecapsulateResult(response.data);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Kyber decapsulation failed');
+    } finally {
+      setLoadingAction(null);
+    }
+  };
+
+  const isPqcKemAlgo = (a: string) =>
+    /^KYBER|^NTRU|^SABER/i.test(a);
 
   const canEncrypt = encMode === 'text' ? !!plainText : !!encFile;
 
@@ -562,15 +623,23 @@ export const Protect = () => {
             <div>
               <label className="label">Algorithm</label>
               <select value={pqcAlgorithm} onChange={(e) => setPqcAlgorithm(e.target.value)} className="field">
-                <optgroup label="Signatures (DILITHIUM)">
+                <optgroup label="Signatures">
                   <option value="DILITHIUM2">DILITHIUM2 (Level 2)</option>
                   <option value="DILITHIUM3">DILITHIUM3 (Level 3 - Recommended)</option>
                   <option value="DILITHIUM5">DILITHIUM5 (Level 5)</option>
+                  <option value="FALCON512">FALCON512 (Level 1, compact)</option>
+                  <option value="FALCON1024">FALCON1024 (Level 5)</option>
+                  <option value="SPHINCS+-SHA2-128f">SPHINCS+-SHA2-128f (Level 1, hash-based)</option>
                 </optgroup>
-                <optgroup label="Key Exchange (KYBER)">
+                <optgroup label="Key Encapsulation (KEM)">
                   <option value="KYBER512">KYBER512 (Level 1)</option>
                   <option value="KYBER768">KYBER768 (Level 3)</option>
                   <option value="KYBER1024">KYBER1024 (Level 5)</option>
+                  <option value="NTRU-HPS-2048-509">NTRU-HPS-2048-509 (Level 1)</option>
+                  <option value="NTRU-HPS-2048-677">NTRU-HPS-2048-677 (Level 3)</option>
+                  <option value="SABER-LIGHTSABER">SABER-LIGHTSABER (Level 1)</option>
+                  <option value="SABER-SABER">SABER-SABER (Level 3)</option>
+                  <option value="SABER-FIRESABER">SABER-FIRESABER (Level 5)</option>
                 </optgroup>
               </select>
             </div>
@@ -600,43 +669,53 @@ export const Protect = () => {
                 </div>
                 <KVRow label="Algorithm" value={pqcKeypair.algorithm} />
                 <KVRow label="NIST Level" value={String(pqcKeypair.nist_level)} />
-                <KVRow label="Public Key" value={`${pqcKeypair.key_sizes.public_key_bytes} bytes`} />
-                <KVRow label="Private Key" value={`${pqcKeypair.key_sizes.private_key_bytes} bytes`} />
+                {pqcKeypair.key_sizes && (
+                  <>
+                    <KVRow label="Public Key" value={`${pqcKeypair.key_sizes.public_key_bytes} bytes`} />
+                    <KVRow label="Private Key" value={`${pqcKeypair.key_sizes.private_key_bytes} bytes`} />
+                  </>
+                )}
                 <MonoValue label="Public Key" value={pqcKeypair.public_key} truncate={60} />
               </div>
             )}
           </div>
 
-          {/* PQC Sign / Verify */}
+          {/* PQC Sign / Verify (signature algorithms only) */}
           <div className="section space-y-4">
-            <h3 className="text-base font-semibold text-white flex items-center gap-2">Quantum-Safe Sign / Verify <InfoPopover title="Quantum-Safe Sign / Verify" description="Sign and verify messages using post-quantum DILITHIUM signatures. These signatures cannot be forged even with a quantum computer." useCases={['Quantum-resistant document signing', 'Blockchain transaction signatures', 'Long-term non-repudiation']} /></h3>
-            <div>
-              <label className="label">Message</label>
-              <textarea
-                value={pqcSignMessage}
-                onChange={(e) => setPqcSignMessage(e.target.value)}
-                placeholder="Message to sign with PQC..."
-                className="field h-24 resize-none"
-              />
-            </div>
-            <div className="flex gap-3">
-              <button
-                onClick={onPqcSign}
-                disabled={!pqcKeypair || !pqcSignMessage || loadingAction === 'pqc-sign'}
-                className="flex-1 btn-primary"
-              >
-                {loadingAction === 'pqc-sign' ? 'Signing...' : 'Sign (PQC)'}
-              </button>
-              <button
-                onClick={onPqcVerify}
-                disabled={!pqcSignature || loadingAction === 'pqc-verify'}
-                className="flex-1 btn-secondary"
-              >
-                {loadingAction === 'pqc-verify' ? 'Verifying...' : 'Verify (PQC)'}
-              </button>
-            </div>
-            {!pqcKeypair && (
-              <p className="text-xs text-slate-500">Generate a DILITHIUM key pair first to sign and verify.</p>
+            <h3 className="text-base font-semibold text-white flex items-center gap-2">Quantum-Safe Sign / Verify <InfoPopover title="Quantum-Safe Sign / Verify" description="Sign and verify messages using post-quantum DILITHIUM, FALCON, or SPHINCS+ signatures. These signatures cannot be forged even with a quantum computer." useCases={['Quantum-resistant document signing', 'Blockchain transaction signatures', 'Long-term non-repudiation']} /></h3>
+            {isPqcKemAlgo(pqcAlgorithm) ? (
+              <p className="text-sm text-slate-400">KEM algorithms (KYBER, NTRU, SABER) are for key encapsulation only. Use the Kyber KEM section below for encapsulate/decapsulate workflow.</p>
+            ) : (
+              <>
+                <div>
+                  <label className="label">Message</label>
+                  <textarea
+                    value={pqcSignMessage}
+                    onChange={(e) => setPqcSignMessage(e.target.value)}
+                    placeholder="Message to sign with PQC..."
+                    className="field h-24 resize-none"
+                  />
+                </div>
+                <div className="flex gap-3">
+                  <button
+                    onClick={onPqcSign}
+                    disabled={!pqcKeypair || !pqcSignMessage || loadingAction === 'pqc-sign'}
+                    className="flex-1 btn-primary"
+                  >
+                    {loadingAction === 'pqc-sign' ? 'Signing...' : 'Sign (PQC)'}
+                  </button>
+                  <button
+                    onClick={onPqcVerify}
+                    disabled={!pqcSignature || loadingAction === 'pqc-verify'}
+                    className="flex-1 btn-secondary"
+                  >
+                    {loadingAction === 'pqc-verify' ? 'Verifying...' : 'Verify (PQC)'}
+                  </button>
+                </div>
+                {!pqcKeypair && (
+                  <p className="text-xs text-slate-500">Generate a signature key pair (DILITHIUM, FALCON, SPHINCS+) first to sign and verify.</p>
+                )}
+              </>
             )}
 
             {pqcSignature && (
@@ -664,6 +743,88 @@ export const Protect = () => {
                 <span className="text-base text-slate-200">
                   {pqcVerifyResult ? 'Post-quantum signature verified' : 'PQC signature verification failed'}
                 </span>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* ── Kyber Key Encapsulation (KEM) ─────────────────────── */}
+      <div className="section space-y-4 border-t border-slate-700/40 pt-6">
+        <h2 className="text-lg font-bold text-white flex items-center gap-2">Kyber Key Encapsulation (KEM) <InfoPopover title="Kyber KEM" description="Key Encapsulation Mechanism for quantum-safe shared secrets. Recipient generates a keypair; sender encapsulates a shared secret with the public key; recipient decapsulates with the private key. Both obtain the same secret for symmetric encryption." useCases={['Quantum-safe key exchange', 'Establish shared secret between parties', 'Pre-quantum key agreement replacement']} /></h2>
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* 1. Recipient: Generate keypair */}
+          <div className="space-y-3">
+            <h3 className="text-sm font-semibold text-slate-300">1. Recipient: Generate Keypair</h3>
+            <div>
+              <label className="label">Algorithm</label>
+              <select value={kemAlgorithm} onChange={(e) => setKemAlgorithm(e.target.value as 'KYBER512' | 'KYBER768' | 'KYBER1024')} className="field">
+                <option value="KYBER512">KYBER512 (Level 1)</option>
+                <option value="KYBER768">KYBER768 (Level 3)</option>
+                <option value="KYBER1024">KYBER1024 (Level 5)</option>
+              </select>
+            </div>
+            <div>
+              <label className="label">Encoding</label>
+              <select value={kemEncoding} onChange={(e) => setKemEncoding(e.target.value as 'base64' | 'hex')} className="field">
+                <option value="base64">Base64</option>
+                <option value="hex">Hex</option>
+              </select>
+            </div>
+            <button onClick={onKemGenerate} disabled={loadingAction === 'kem-gen'} className="btn-primary w-full">
+              {loadingAction === 'kem-gen' ? 'Generating...' : 'Generate Keypair'}
+            </button>
+            {kemKeypair && (
+              <div className="space-y-2 pt-2">
+                <div className="flex gap-2">
+                  <CopyButton value={kemKeypair.public_key} label="Copy Public" />
+                  <CopyButton value={kemKeypair.private_key} label="Copy Private" />
+                </div>
+                <MonoValue label="Public Key" value={kemKeypair.public_key} truncate={50} />
+                <p className="text-xs text-slate-500">Share public key with sender; keep private key secret.</p>
+              </div>
+            )}
+          </div>
+          {/* 2. Sender: Encapsulate */}
+          <div className="space-y-3">
+            <h3 className="text-sm font-semibold text-slate-300">2. Sender: Encapsulate</h3>
+            <div>
+              <label className="label">Recipient&apos;s Public Key</label>
+              <textarea value={kemSenderPubkey} onChange={(e) => setKemSenderPubkey(e.target.value)} placeholder="Paste recipient's public key..." className="field h-20 resize-none text-sm" />
+            </div>
+            <button onClick={onKemEncapsulate} disabled={!kemSenderPubkey.trim() || loadingAction === 'kem-encap'} className="btn-primary w-full">
+              {loadingAction === 'kem-encap' ? 'Encapsulating...' : 'Encapsulate'}
+            </button>
+            {kemEncapsulateResult && (
+              <div className="space-y-2 pt-2">
+                <MonoValue label="Ciphertext" value={kemEncapsulateResult.ciphertext} truncate={50} />
+                <MonoValue label="Shared Secret" value={kemEncapsulateResult.shared_secret} truncate={50} />
+                <p className="text-xs text-slate-500">Send ciphertext to recipient; use shared secret for encryption.</p>
+              </div>
+            )}
+          </div>
+          {/* 3. Recipient: Decapsulate */}
+          <div className="space-y-3">
+            <h3 className="text-sm font-semibold text-slate-300">3. Recipient: Decapsulate</h3>
+            <div>
+              <label className="label">Ciphertext</label>
+              <textarea value={kemCiphertext} onChange={(e) => setKemCiphertext(e.target.value)} placeholder="Paste ciphertext from sender..." className="field h-20 resize-none text-sm" />
+            </div>
+            <div>
+              <label className="label">Your Private Key</label>
+              <textarea value={kemRecipientPrivkey} onChange={(e) => setKemRecipientPrivkey(e.target.value)} placeholder="Paste your private key..." className="field h-20 resize-none text-sm" />
+            </div>
+            <button onClick={onKemDecapsulate} disabled={!kemCiphertext.trim() || !kemRecipientPrivkey.trim() || loadingAction === 'kem-decap'} className="btn-secondary w-full">
+              {loadingAction === 'kem-decap' ? 'Decapsulating...' : 'Decapsulate'}
+            </button>
+            {kemDecapsulateResult && (
+              <div className="space-y-2 pt-2">
+                <MonoValue label="Shared Secret" value={kemDecapsulateResult.shared_secret} truncate={50} />
+                {kemEncapsulateResult && (
+                  <p className={`text-xs ${kemDecapsulateResult.shared_secret === kemEncapsulateResult.shared_secret ? 'text-green-400' : 'text-amber-400'}`}>
+                    {kemDecapsulateResult.shared_secret === kemEncapsulateResult.shared_secret ? 'Match! Shared secret verified.' : 'Mismatch (different algorithm/encoding?).'}
+                  </p>
+                )}
               </div>
             )}
           </div>

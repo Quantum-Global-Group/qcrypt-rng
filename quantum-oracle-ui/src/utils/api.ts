@@ -4,6 +4,9 @@ import type {
   BatchGenerateResultItem,
   BatchOracleRequestItem,
   EncryptResponse,
+  FulfillmentChainConfig,
+  FulfillmentRequestItem,
+  FulfillmentRequestStatus,
   GenerateBytesResponse,
   GenerateKeyResponse,
   GeneratePasswordResponse,
@@ -12,6 +15,9 @@ import type {
   HardwareDevicesResponse,
   HashResponse,
   HealthResponse,
+  KemDecapsulateResponse,
+  KemEncapsulateResponse,
+  KemKeypairResponse,
   NetworkInfoResponse,
   OracleBenchmarkResponse,
   OracleRequestResponse,
@@ -255,8 +261,22 @@ export const hashData = (payload: {
   requestForm('/protect/hash', payload);
 
 // PQC / Threat API
-export const generatePQCKey = (algorithm: string, format: 'base64' | 'hex'): Promise<GeneratePqcResponse> =>
-  requestForm('/pqc/generate', { algorithm, format });
+const PQC_ENDPOINTS: Record<string, string> = {
+  FALCON512: '/pqc/falcon/generate',
+  FALCON1024: '/pqc/falcon/generate',
+  'SPHINCS+-SHA2-128F': '/pqc/sphincs/generate',
+  'SPHINCS+-SHA2-128f': '/pqc/sphincs/generate',
+  'NTRU-HPS-2048-509': '/pqc/ntru/generate',
+  'NTRU-HPS-2048-677': '/pqc/ntru/generate',
+  'SABER-LIGHTSABER': '/pqc/saber/generate',
+  'SABER-SABER': '/pqc/saber/generate',
+  'SABER-FIRESABER': '/pqc/saber/generate',
+};
+
+export const generatePQCKey = (algorithm: string, encoding: 'base64' | 'hex'): Promise<GeneratePqcResponse> => {
+  const path = PQC_ENDPOINTS[algorithm] ?? '/pqc/generate';
+  return requestForm(path, { algorithm, encoding: encoding || 'base64' });
+};
 
 export const signPqc = (payload: {
   message: string;
@@ -344,3 +364,78 @@ export const requestBatchQuantumRandomness = (request: {
   target_chain?: string;
 }): Promise<ApiResponse<BatchOracleRequestItem[]>> =>
   requestJson('/oracle/requests/batch', { method: 'POST', body: JSON.stringify(request) });
+
+// Kyber KEM API
+export const kemGenerate = (
+  algorithm: 'KYBER512' | 'KYBER768' | 'KYBER1024' = 'KYBER768',
+  encoding: 'base64' | 'hex' = 'base64',
+): Promise<ApiResponse<KemKeypairResponse>> =>
+  requestForm('/pqc/kem/generate', { algorithm, encoding });
+
+export const kemEncapsulate = (
+  publicKey: string,
+  algorithm: 'KYBER512' | 'KYBER768' | 'KYBER1024' = 'KYBER768',
+  encoding: 'base64' | 'hex' = 'base64',
+): Promise<ApiResponse<KemEncapsulateResponse>> =>
+  requestForm('/pqc/kem/encapsulate', { public_key: publicKey, algorithm, encoding });
+
+export const kemDecapsulate = (
+  ciphertext: string,
+  privateKey: string,
+  algorithm: 'KYBER512' | 'KYBER768' | 'KYBER1024' = 'KYBER768',
+  encoding: 'base64' | 'hex' = 'base64',
+): Promise<ApiResponse<KemDecapsulateResponse>> =>
+  requestForm('/pqc/kem/decapsulate', { ciphertext, private_key: privateKey, algorithm, encoding });
+
+export const getKemInfo = (): Promise<ApiResponse<Record<string, unknown>>> => requestJson('/pqc/kem/info');
+
+// Oracle fulfillment API
+export interface ConfigureFulfillmentChainParams {
+  chain: string;
+  rpc_url: string;
+  private_key: string;
+  explorer_url: string;
+  chain_id: number;
+  currency_symbol: string;
+  gas_price_gwei?: number;
+  confirmations_required?: number;
+}
+
+export const configureFulfillmentChain = (params: ConfigureFulfillmentChainParams): Promise<ApiResponse<FulfillmentChainConfig>> =>
+  requestForm('/oracle/fulfillment/configure-chain', {
+    chain: params.chain,
+    rpc_url: params.rpc_url,
+    private_key: params.private_key,
+    explorer_url: params.explorer_url,
+    chain_id: params.chain_id,
+    currency_symbol: params.currency_symbol,
+    ...(params.gas_price_gwei != null && { gas_price_gwei: params.gas_price_gwei }),
+    confirmations_required: params.confirmations_required ?? 3,
+  });
+
+export const createFulfillmentRequest = (params: {
+  chain: string;
+  contract_address: string;
+  num_bytes?: number;
+  num_qubits?: number;
+  async_fulfillment?: boolean;
+}): Promise<ApiResponse<{ request_id: string; chain: string; fulfillment_status: string; status: FulfillmentRequestStatus }>> =>
+  requestForm('/oracle/fulfillment/request', {
+    chain: params.chain,
+    contract_address: params.contract_address,
+    num_bytes: params.num_bytes ?? 32,
+    num_qubits: params.num_qubits ?? 16,
+    async_fulfillment: params.async_fulfillment ?? true,
+  });
+
+export const getFulfillmentStatus = (requestId: string): Promise<ApiResponse<FulfillmentRequestStatus>> =>
+  requestJson(`/oracle/fulfillment/status/${requestId}`);
+
+export const listFulfillmentRequests = (): Promise<ApiResponse<{ requests: FulfillmentRequestItem[]; total_count: number }>> =>
+  requestJson('/oracle/fulfillment/requests');
+
+export const getFulfillmentChains = (): Promise<ApiResponse<{ chains: FulfillmentChainConfig[] } | { message: string }>> =>
+  requestJson('/oracle/fulfillment/chains');
+
+export const retryFulfillment = (requestId: string): Promise<ApiResponse<{ success: boolean; message?: string }>> =>
+  requestJson(`/oracle/fulfillment/retry/${requestId}`, { method: 'POST' });

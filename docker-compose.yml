@@ -38,16 +38,8 @@ services:
     image: redis:7-alpine
     restart: unless-stopped
 
-  dashboard:
-    build: .
-    ports:
-      - "8501:8501"
-    command: streamlit run dashboard.py --server.address 0.0.0.0 --server.port 8501
-    environment:
-      - API_BASE_URL=http://api:8000/api/v2
-    depends_on:
-      - api
-    restart: unless-stopped
+  # Web UI: use Next.js in quantum-oracle-ui (npm run dev / production build).
+  # Legacy Streamlit dashboard: legacy/streamlit/dashboard.py (not included in this image).
 
 volumes:
   postgres_data:

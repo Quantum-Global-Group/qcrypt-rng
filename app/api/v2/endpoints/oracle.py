@@ -3,7 +3,7 @@ QCrypt RNG API - Quantum Randomness Oracle Endpoint
 API endpoint for interacting with the quantum randomness oracle for blockchain applications
 """
 
-from fastapi import APIRouter, HTTPException, BackgroundTasks
+from fastapi import APIRouter, HTTPException, BackgroundTasks, Form
 from typing import Dict, Any, Optional
 from pydantic import BaseModel
 import time
@@ -14,6 +14,9 @@ from app.quantum.hardware_interface import get_quantum_hardware_manager
 from app.quantum.commitment import compute_commitment_hex
 from app.api.v2.models.responses import BaseResponse, ResponseStatus
 from app.utils.logging import logger
+from app.blockchain.oracle_service import get_oracle_fulfillment_service, FulfillmentStatus
+from app.blockchain.base import ChainConfig
+from app.monitoring import OracleMetrics, QRNGMetrics
 
 router = APIRouter()
 
@@ -384,3 +387,299 @@ async def batch_request_quantum_randomness(request: BatchOracleRequest):
     except Exception as e:
         logger.error(f"Batch oracle request error: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail=f"Batch request failed: {e}")
+
+
+# ============================================================================
+# On-Chain Fulfillment Endpoints
+# ============================================================================
+
+@router.post("/fulfillment/configure-chain", response_model=BaseResponse)
+async def configure_blockchain_chain(
+    chain: str = Form(..., description="Blockchain name: ethereum, polygon, bsc, avalanche, fantom"),
+    rpc_url: str = Form(..., description="RPC endpoint URL"),
+    private_key: str = Form(..., description="Oracle operator private key"),
+    explorer_url: str = Form(..., description="Block explorer URL"),
+    chain_id: int = Form(..., description="Chain ID"),
+    currency_symbol: str = Form(..., description="Native currency symbol"),
+    gas_price_gwei: Optional[int] = Form(None, description="Gas price in gwei"),
+    confirmations_required: int = Form(3, description="Number of confirmations to wait")
+):
+    """
+    Configure a blockchain chain for oracle fulfillment
+
+    Sets up the chain adapter with the provided configuration.
+    The private key is used to sign transactions for commit/reveal operations.
+
+    **Security Note:** Store private keys securely. In production, use a hardware wallet
+    or secure key management service (AWS KMS, Azure Key Vault, etc.).
+    """
+    try:
+        service = get_oracle_fulfillment_service()
+
+        config = ChainConfig(
+            rpc_url=rpc_url,
+            chain_id=chain_id,
+            explorer_url=explorer_url,
+            currency_symbol=currency_symbol,
+            private_key=private_key,
+            gas_price_gwei=gas_price_gwei,
+            confirmations_required=confirmations_required
+        )
+
+        success = service.configure_chain(chain, config)
+
+        if not success:
+            raise HTTPException(status_code=400, detail=f"Failed to configure chain: {chain}")
+
+        return BaseResponse(
+            status=ResponseStatus.SUCCESS,
+            request_id=f"config_{int(time.time()*1000000)}",
+            data={
+                "chain": chain,
+                "configured": True,
+                "rpc_url": rpc_url,
+                "chain_id": chain_id,
+                "explorer_url": explorer_url
+            },
+            metadata={
+                "message": f"Successfully configured {chain} chain adapter",
+                "warning": "Ensure private key is stored securely and never committed to version control"
+            }
+        )
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Chain configuration error: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post("/fulfillment/request", response_model=BaseResponse)
+async def create_onchain_oracle_request(
+    chain: str = Form(..., description="Target blockchain"),
+    contract_address: str = Form(..., description="Oracle contract address"),
+    num_bytes: int = Form(32, description="Number of random bytes"),
+    num_qubits: int = Form(16, description="Number of qubits"),
+    async_fulfillment: bool = Form(True, description="Process fulfillment asynchronously")
+):
+    """
+    Create an oracle request with on-chain fulfillment
+
+    This endpoint creates a new oracle request and optionally triggers
+    asynchronous fulfillment (commit + reveal) on the specified blockchain.
+
+    **Process:**
+    1. Create oracle request
+    2. Generate quantum randomness
+    3. Create commitment (keccak256)
+    4. Submit commit transaction
+    5. Wait for confirmation
+    6. Submit reveal transaction
+    7. Wait for confirmation
+
+    **Fulfillment Status:**
+    - PENDING: Request created
+    - COMMIT_SUBMITTED: Commit transaction sent
+    - COMMIT_CONFIRMED: Commit confirmed on-chain
+    - REVEAL_SUBMITTED: Reveal transaction sent
+    - REVEAL_CONFIRMED: Reveal confirmed on-chain
+    - COMPLETED: Fulfillment complete
+    - FAILED: Fulfillment failed
+    """
+    try:
+        service = get_oracle_fulfillment_service()
+        start_time = time.time()
+
+        # Create request
+        request = await service.create_request(
+            chain=chain,
+            contract_address=contract_address,
+            num_bytes=num_bytes,
+            num_qubits=num_qubits
+        )
+
+        # Record request metric
+        OracleMetrics.record_request(chain, "success")
+
+        if async_fulfillment:
+            # Process asynchronously (non-blocking)
+            asyncio.create_task(service.fulfill_request(request.request_id))
+            fulfillment_status = "processing_async"
+        else:
+            # Process synchronously (blocking)
+            success = await service.fulfill_request(request.request_id)
+            fulfillment_status = "completed" if success else "failed"
+            
+            # Record fulfillment metric
+            duration = time.time() - start_time
+            OracleMetrics.record_fulfillment(chain, fulfillment_status, duration)
+
+        status_data = service.get_request_status(request.request_id)
+
+        return BaseResponse(
+            status=ResponseStatus.SUCCESS,
+            request_id=f"onchain_{int(time.time()*1000000)}",
+            data={
+                "request_id": request.request_id,
+                "chain": chain,
+                "contract_address": contract_address,
+                "fulfillment_status": fulfillment_status,
+                "status": status_data
+            },
+            metadata={
+                "message": f"Oracle request created for {chain}",
+                "async": async_fulfillment,
+                "next_step": "Use /oracle/fulfillment/status/{request_id} to check status" if async_fulfillment else None
+            }
+        )
+    except Exception as e:
+        logger.error(f"On-chain request error: {str(e)}")
+        # Record error metric
+        OracleMetrics.record_request(chain, "error")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/fulfillment/status/{request_id}", response_model=BaseResponse)
+async def get_fulfillment_status(request_id: str):
+    """
+    Get the status of an on-chain oracle request
+
+    Returns detailed information about the fulfillment process including:
+    - Current status
+    - Commitment hash
+    - Randomness value (after reveal)
+    - Transaction hashes
+    - Explorer URLs
+    """
+    try:
+        service = get_oracle_fulfillment_service()
+
+        status = service.get_request_status(request_id)
+
+        if status is None:
+            raise HTTPException(status_code=404, detail=f"Request not found: {request_id}")
+
+        return BaseResponse(
+            status=ResponseStatus.SUCCESS,
+            request_id=request_id,
+            data=status,
+            metadata={
+                "chain_info": await service.get_chain_info(status["chain"]) if status["chain"] else None
+            }
+        )
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Fulfillment status error: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/fulfillment/requests", response_model=BaseResponse)
+async def list_all_fulfillment_requests():
+    """
+    List all oracle fulfillment requests
+
+    Returns a list of all oracle requests with their current status.
+    """
+    try:
+        service = get_oracle_fulfillment_service()
+
+        requests = service.get_all_requests()
+
+        return BaseResponse(
+            status=ResponseStatus.SUCCESS,
+            request_id=f"list_{int(time.time()*1000000)}",
+            data={
+                "requests": requests,
+                "total_count": len(requests),
+                "by_status": {
+                    status.value: sum(1 for r in requests if r["status"] == status.value)
+                    for status in FulfillmentStatus
+                }
+            },
+            metadata={
+                "supported_chains": service.get_supported_chains()
+            }
+        )
+    except Exception as e:
+        logger.error(f"List requests error: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/fulfillment/chains", response_model=BaseResponse)
+async def list_supported_chains():
+    """
+    List all supported blockchain networks
+
+    Returns information about each supported chain including:
+    - Chain ID
+    - Explorer URL
+    - RPC endpoint
+    - Supported features
+    """
+    try:
+        service = get_oracle_fulfillment_service()
+
+        chains = service.get_supported_chains()
+
+        return BaseResponse(
+            status=ResponseStatus.SUCCESS,
+            request_id=f"chains_{int(time.time()*1000000)}",
+            data=chains,
+            metadata={
+                "total_chains": len(chains),
+                "message": "Configure chains using /oracle/fulfillment/configure-chain"
+            }
+        )
+    except Exception as e:
+        logger.error(f"List chains error: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post("/fulfillment/retry/{request_id}", response_model=BaseResponse)
+async def retry_fulfillment(request_id: str):
+    """
+    Retry fulfillment of a failed oracle request
+
+    If a request failed during commit or reveal, this endpoint
+    attempts to retry the fulfillment process.
+
+    Note: Only requests in FAILED status can be retried.
+    """
+    try:
+        service = get_oracle_fulfillment_service()
+
+        status = service.get_request_status(request_id)
+        if status is None:
+            raise HTTPException(status_code=404, detail=f"Request not found: {request_id}")
+
+        if status["status"] != "failed":
+            raise HTTPException(
+                status_code=400,
+                detail=f"Cannot retry request in {status['status']} status. Only failed requests can be retried."
+            )
+
+        # Reset status and retry
+        request = service.requests[request_id]
+        request.status = FulfillmentStatus.PENDING
+        request.error = None
+
+        # Retry fulfillment
+        success = await service.fulfill_request(request_id)
+
+        return BaseResponse(
+            status=ResponseStatus.SUCCESS if success else ResponseStatus.ERROR,
+            request_id=f"retry_{int(time.time()*1000000)}",
+            data={
+                "request_id": request_id,
+                "retry_successful": success,
+                "new_status": service.get_request_status(request_id)
+            },
+            metadata={
+                "message": "Fulfillment retry completed"
+            }
+        )
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Retry fulfillment error: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))

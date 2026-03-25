@@ -1,0 +1,271 @@
+# QCrypt RNG Prometheus Alerting Rules
+# Reference: docs/MONITORING_GUIDE.md
+
+groups:
+  - name: qcrypt_rng_alerts
+    interval: 30s
+    rules:
+      # ========================================================================
+      # Oracle Fulfillment Alerts
+      # ========================================================================
+
+      - alert: OracleFulfillmentHighFailureRate
+        expr: |
+          sum(rate(qcrypt_oracle_requests_total{status="error"}[5m]))
+          /
+          sum(rate(qcrypt_oracle_requests_total[5m])) > 0.1
+        for: 5m
+        labels:
+          severity: critical
+          category: oracle
+        annotations:
+          summary: "High oracle fulfillment failure rate"
+          description: "Oracle failure rate is {{ $value | humanizePercentage }} over the last 5 minutes"
+          runbook_url: "https://github.com/quantumGlobalGroup/qcrypt-rng/blob/main/docs/MONITORING_GUIDE.md#oracle-fulfillment-alerts"
+
+      - alert: OracleFulfillmentHighLatency
+        expr: |
+          histogram_quantile(0.95, rate(qcrypt_oracle_fulfillment_duration_seconds_bucket[5m])) > 30
+        for: 5m
+        labels:
+          severity: warning
+          category: oracle
+        annotations:
+          summary: "High oracle fulfillment latency"
+          description: "95th percentile fulfillment duration is {{ $value }}s on chain {{ $labels.chain }}"
+          runbook_url: "https://github.com/quantumGlobalGroup/qcrypt-rng/blob/main/docs/MONITORING_GUIDE.md#oracle-fulfillment-alerts"
+
+      - alert: OracleNoSuccessfulFulfillments
+        expr: |
+          sum(rate(qcrypt_oracle_requests_total{status="success"}[10m])) == 0
+          and
+          sum(rate(qcrypt_oracle_requests_total[10m])) > 0
+        for: 10m
+        labels:
+          severity: critical
+          category: oracle
+        annotations:
+          summary: "No successful oracle fulfillments in 10 minutes"
+          description: "All oracle requests are failing. Check blockchain connectivity and private keys."
+          runbook_url: "https://github.com/quantumGlobalGroup/qcrypt-rng/blob/main/docs/MONITORING_GUIDE.md#oracle-fulfillment-alerts"
+
+      # ========================================================================
+      # Entropy Quality Alerts
+      # ========================================================================
+
+      - alert: EntropyQualityPoor
+        expr: qcrypt_entropy_shannon_entropy < 7.5
+        for: 2m
+        labels:
+          severity: warning
+          category: entropy
+        annotations:
+          summary: "Low entropy quality detected"
+          description: "Shannon entropy is {{ $value }} bits/byte (threshold: 7.5)"
+          runbook_url: "https://github.com/quantumGlobalGroup/qcrypt-rng/blob/main/docs/MONITORING_GUIDE.md#entropy-quality-alerts"
+
+      - alert: EntropyQualityCritical
+        expr: qcrypt_entropy_shannon_entropy < 7.0
+        for: 1m
+        labels:
+          severity: critical
+          category: entropy
+        annotations:
+          summary: "Critical entropy quality issue"
+          description: "Shannon entropy is {{ $value }} bits/byte - randomness may be compromised"
+          runbook_url: "https://github.com/quantumGlobalGroup/qcrypt-rng/blob/main/docs/MONITORING_GUIDE.md#entropy-quality-alerts"
+
+      - alert: EntropyMinEntropyLow
+        expr: qcrypt_entropy_min_entropy < 7.0
+        for: 2m
+        labels:
+          severity: warning
+          category: entropy
+        annotations:
+          summary: "Low min-entropy detected"
+          description: "Min-entropy is {{ $value }} bits/byte (threshold: 7.0)"
+          runbook_url: "https://github.com/quantumGlobalGroup/qcrypt-rng/blob/main/docs/MONITORING_GUIDE.md#entropy-quality-alerts"
+
+      - alert: EntropyQualityStatusPoor
+        expr: qcrypt_entropy_quality_status == 0
+        for: 1m
+        labels:
+          severity: critical
+          category: entropy
+        annotations:
+          summary: "Entropy quality status is POOR"
+          description: "Entropy quality check has failed. Immediate investigation required."
+          runbook_url: "https://github.com/quantumGlobalGroup/qcrypt-rng/blob/main/docs/MONITORING_GUIDE.md#entropy-quality-alerts"
+
+      # ========================================================================
+      # Hardware Device Alerts
+      # ========================================================================
+
+      - alert: HardwareDeviceOffline
+        expr: qcrypt_hardware_device_status == 0
+        for: 1m
+        labels:
+          severity: critical
+          category: hardware
+        annotations:
+          summary: "Hardware device offline"
+          description: "Device {{ $labels.device_id }} ({{ $labels.vendor }}) is not operational"
+          runbook_url: "https://github.com/quantumGlobalGroup/qcrypt-rng/blob/main/docs/MONITORING_GUIDE.md#hardware-device-alerts"
+
+      - alert: HardwareDeviceError
+        expr: qcrypt_hardware_device_status == -1
+        for: 1m
+        labels:
+          severity: critical
+          category: hardware
+        annotations:
+          summary: "Hardware device error"
+          description: "Device {{ $labels.device_id }} ({{ $labels.vendor }}) is in error state"
+          runbook_url: "https://github.com/quantumGlobalGroup/qcrypt-rng/blob/main/docs/MONITORING_GUIDE.md#hardware-device-alerts"
+
+      - alert: HardwareHighErrorRate
+        expr: qcrypt_hardware_error_rate > 0.05
+        for: 5m
+        labels:
+          severity: warning
+          category: hardware
+        annotations:
+          summary: "High hardware error rate"
+          description: "Device {{ $labels.device_id }} has error rate of {{ $value | humanizePercentage }}"
+          runbook_url: "https://github.com/quantumGlobalGroup/qcrypt-rng/blob/main/docs/MONITORING_GUIDE.md#hardware-device-alerts"
+
+      - alert: HardwareHighTemperature
+        expr: qcrypt_hardware_temperature_celsius > 60
+        for: 5m
+        labels:
+          severity: warning
+          category: hardware
+        annotations:
+          summary: "Hardware device high temperature"
+          description: "Device {{ $labels.device_id }} temperature is {{ $value }}°C"
+          runbook_url: "https://github.com/quantumGlobalGroup/qcrypt-rng/blob/main/docs/MONITORING_GUIDE.md#hardware-device-alerts"
+
+      # ========================================================================
+      # PQC Operation Alerts
+      # ========================================================================
+
+      - alert: PQCHighFailureRate
+        expr: |
+          sum(rate(qcrypt_pqc_operations_total{status="error"}[5m]))
+          /
+          sum(rate(qcrypt_pqc_operations_total[5m])) > 0.05
+        for: 5m
+        labels:
+          severity: warning
+          category: pqc
+        annotations:
+          summary: "High PQC operation failure rate"
+          description: "PQC failure rate is {{ $value | humanizePercentage }} for algorithm {{ $labels.algorithm }}"
+          runbook_url: "https://github.com/quantumGlobalGroup/qcrypt-rng/blob/main/docs/MONITORING_GUIDE.md#pqc-operation-alerts"
+
+      - alert: PQCHighLatency
+        expr: |
+          histogram_quantile(0.99, rate(qcrypt_pqc_operation_duration_seconds_bucket{operation="generate_keypair"}[5m])) > 1
+        for: 5m
+        labels:
+          severity: warning
+          category: pqc
+        annotations:
+          summary: "High PQC key generation latency"
+          description: "99th percentile key generation duration is {{ $value }}s for {{ $labels.algorithm }}"
+          runbook_url: "https://github.com/quantumGlobalGroup/qcrypt-rng/blob/main/docs/MONITORING_GUIDE.md#pqc-operation-alerts"
+
+      # ========================================================================
+      # API Performance Alerts
+      # ========================================================================
+
+      - alert: APILatencyHigh
+        expr: |
+          histogram_quantile(0.95, rate(qcrypt_api_request_duration_seconds_bucket[5m])) > 1
+        for: 5m
+        labels:
+          severity: warning
+          category: api
+        annotations:
+          summary: "High API latency"
+          description: "95th percentile API latency is {{ $value }}s for endpoint {{ $labels.endpoint }}"
+          runbook_url: "https://github.com/quantumGlobalGroup/qcrypt-rng/blob/main/docs/MONITORING_GUIDE.md#api-performance-alerts"
+
+      - alert: APIHighErrorRate
+        expr: |
+          sum(rate(qcrypt_api_requests_total{status="error"}[5m]))
+          /
+          sum(rate(qcrypt_api_requests_total[5m])) > 0.05
+        for: 5m
+        labels:
+          severity: warning
+          category: api
+        annotations:
+          summary: "High API error rate"
+          description: "API error rate is {{ $value | humanizePercentage }} for endpoint {{ $labels.endpoint }}"
+          runbook_url: "https://github.com/quantumGlobalGroup/qcrypt-rng/blob/main/docs/MONITORING_GUIDE.md#api-performance-alerts"
+
+      # ========================================================================
+      # System Resource Alerts
+      # ========================================================================
+
+      - alert: SystemCPUHigh
+        expr: qcrypt_system_cpu_usage_percent > 80
+        for: 5m
+        labels:
+          severity: warning
+          category: system
+        annotations:
+          summary: "High CPU usage"
+          description: "CPU usage is {{ $value }}%"
+          runbook_url: "https://github.com/quantumGlobalGroup/qcrypt-rng/blob/main/docs/MONITORING_GUIDE.md#system-resource-alerts"
+
+      - alert: SystemCPUCritical
+        expr: qcrypt_system_cpu_usage_percent > 95
+        for: 2m
+        labels:
+          severity: critical
+          category: system
+        annotations:
+          summary: "Critical CPU usage"
+          description: "CPU usage is {{ $value }}% - system may be unresponsive"
+          runbook_url: "https://github.com/quantumGlobalGroup/qcrypt-rng/blob/main/docs/MONITORING_GUIDE.md#system-resource-alerts"
+
+      - alert: SystemMemoryHigh
+        expr: |
+          qcrypt_system_memory_usage_bytes / (1024 * 1024 * 1024) > 7
+        for: 5m
+        labels:
+          severity: warning
+          category: system
+        annotations:
+          summary: "High memory usage"
+          description: "Memory usage exceeds 7GB ({{ $value | humanize }}B)"
+          runbook_url: "https://github.com/quantumGlobalGroup/qcrypt-rng/blob/main/docs/MONITORING_GUIDE.md#system-resource-alerts"
+
+      # ========================================================================
+      # QRNG Generation Alerts
+      # ========================================================================
+
+      - alert: QRNGNoGeneration
+        expr: rate(qcrypt_qrng_bytes_generated_total[5m]) == 0
+        for: 5m
+        labels:
+          severity: warning
+          category: qrng
+        annotations:
+          summary: "No QRNG bytes generated in 5 minutes"
+          description: "Quantum randomness generation may be stalled"
+          runbook_url: "https://github.com/quantumGlobalGroup/qcrypt-rng/blob/main/docs/MONITORING_GUIDE.md#qrng-generation-alerts"
+
+      - alert: QRNGHighLatency
+        expr: |
+          histogram_quantile(0.95, rate(qcrypt_qrng_generation_duration_seconds_bucket[5m])) > 0.5
+        for: 5m
+        labels:
+          severity: warning
+          category: qrng
+        annotations:
+          summary: "High QRNG generation latency"
+          description: "95th percentile generation duration is {{ $value }}s"
+          runbook_url: "https://github.com/quantumGlobalGroup/qcrypt-rng/blob/main/docs/MONITORING_GUIDE.md#qrng-generation-alerts"

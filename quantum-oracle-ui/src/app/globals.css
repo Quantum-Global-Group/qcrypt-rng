@@ -1,19 +1,111 @@
+@import url("https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0&display=swap");
 @import "tailwindcss";
 
+/* Zinc design tokens — mockup-aligned (see docs/frontend/FRONTEND_DESIGN_SYSTEM.md) */
+@theme {
+  --font-body: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --font-headline: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --font-label: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-jetbrains), ui-monospace, monospace;
+
+  --radius-DEFAULT: 0.125rem;
+  --radius-lg: 0.25rem;
+  --radius-xl: 0.5rem;
+  --radius-full: 0.75rem;
+
+  --color-background: #131316;
+  --color-surface: #131316;
+  --color-surface-dim: #131316;
+  --color-surface-bright: #39393c;
+  --color-surface-container-lowest: #0e0e11;
+  --color-surface-container-low: #1b1b1e;
+  --color-surface-container: #1f1f22;
+  --color-surface-container-high: #2a2a2d;
+  --color-surface-container-highest: #353438;
+  --color-surface-variant: #353438;
+  --color-surface-tint: #adc6ff;
+
+  --color-on-background: #e4e1e6;
+  --color-on-surface: #e4e1e6;
+  --color-on-surface-variant: #c2c6d6;
+  --color-inverse-surface: #e4e1e6;
+  --color-inverse-on-surface: #303033;
+
+  --color-outline: #8c909f;
+  --color-outline-variant: #424754;
+
+  --color-primary: #adc6ff;
+  --color-on-primary: #002e6a;
+  --color-primary-container: #4d8eff;
+  --color-on-primary-container: #00285d;
+  --color-primary-fixed: #d8e2ff;
+  --color-primary-fixed-dim: #adc6ff;
+  --color-on-primary-fixed: #001a42;
+  --color-on-primary-fixed-variant: #004395;
+  --color-inverse-primary: #005ac2;
+
+  --color-secondary: #4edea3;
+  --color-on-secondary: #003824;
+  --color-secondary-container: #00a572;
+  --color-on-secondary-container: #00311f;
+  --color-secondary-fixed: #6ffbbe;
+  --color-secondary-fixed-dim: #4edea3;
+  --color-on-secondary-fixed: #002113;
+  --color-on-secondary-fixed-variant: #005236;
+
+  --color-tertiary: #ffb95f;
+  --color-on-tertiary: #472a00;
+  --color-tertiary-container: #ca8100;
+  --color-on-tertiary-container: #3e2400;
+  --color-tertiary-fixed: #ffddb8;
+  --color-tertiary-fixed-dim: #ffb95f;
+  --color-on-tertiary-fixed: #2a1700;
+  --color-on-tertiary-fixed-variant: #653e00;
+
+  --color-error: #ffb4ab;
+  --color-on-error: #690005;
+  --color-error-container: #93000a;
+  --color-on-error-container: #ffdad6;
+}
+
+.material-symbols-outlined {
+  font-family: 'Material Symbols Outlined', sans-serif;
+  font-weight: normal;
+  font-style: normal;
+  font-variation-settings: "FILL" 0, "wght" 400, "GRAD" 0, "opsz" 24;
+  vertical-align: middle;
+  line-height: 1;
+  letter-spacing: normal;
+  text-transform: none;
+  white-space: nowrap;
+  word-wrap: normal;
+  direction: ltr;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+.technical-grid {
+  background-image:
+    linear-gradient(var(--color-surface-container) 1px, transparent 1px),
+    linear-gradient(90deg, var(--color-surface-container) 1px, transparent 1px);
+  background-size: 40px 40px;
+}
+
 :root {
-  --fg: 226 232 240;
-  --bg: 8 12 20;
-  --border: 85 100 120;
-  --muted: 148 163 184;
-  --accent: 130 150 175;
-  --ok: 22 163 74;
-  --warn: 202 138 4;
-  --critical: 220 38 38;
+  --fg: 228 225 230;
+  --bg: 19 19 22;
+  --border: 140 144 159;
+  --muted: 194 198 214;
+  --accent: 173 198 255;
+  --ok: 78 222 163;
+  --warn: 255 185 95;
+  --critical: 255 180 171;
 }
 
 body {
-  color: rgb(var(--fg));
-  background: rgb(var(--bg));
+  color: var(--color-on-surface);
+  background: var(--color-background);
   font-feature-settings: "tnum" 1, "ss01" 1;
 }
 
@@ -25,122 +117,122 @@ body {
   }
 }
 
-/* Single flat bordered section -- replaces panel / panel-subtle / panel-strong */
 .section {
-  border: 1px solid rgb(var(--border) / 0.45);
-  border-radius: 0.375rem;
+  border-radius: var(--radius-lg);
+  background: var(--color-surface-container);
   padding: 1.25rem 1.5rem;
 }
 
 .error-banner {
-  @apply rounded-md px-4 py-3 text-sm;
-  border: 1px solid rgb(var(--critical) / 0.5);
-  color: rgb(252 165 165);
+  @apply rounded-lg px-4 py-3 text-sm;
+  border: 1px solid color-mix(in srgb, var(--color-error) 50%, transparent);
+  color: var(--color-error);
 }
 
-/* ── Buttons ─────────────────────────────────────────────────────── */
-
 .btn-primary {
-  @apply px-5 py-2.5 rounded-md text-base font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer;
-  background: rgb(50 60 78);
-  border: 1px solid rgb(var(--border) / 0.7);
-  color: rgb(var(--fg));
+  @apply cursor-pointer rounded px-5 py-2.5 text-base font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-50;
+  background: var(--color-primary-container);
+  color: var(--color-on-primary-container);
 }
 
 .btn-primary:hover:not(:disabled) {
-  background: rgb(62 74 94);
+  filter: brightness(1.06);
 }
 
 .btn-secondary {
-  @apply px-5 py-2.5 rounded-md text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer;
-  background: transparent;
-  border: 1px solid rgb(var(--border) / 0.5);
-  color: rgb(var(--muted));
+  @apply cursor-pointer rounded px-5 py-2.5 text-sm font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-50;
+  background: var(--color-surface-container-high);
+  border: 1px solid color-mix(in srgb, var(--color-outline) 45%, transparent);
+  color: var(--color-on-surface-variant);
 }
 
 .btn-secondary:hover:not(:disabled) {
-  background: rgb(22 30 42);
-  color: rgb(var(--fg));
+  background: var(--color-surface-container-highest);
+  color: var(--color-on-surface);
 }
 
 .btn-danger {
-  @apply px-5 py-2.5 rounded-md text-base font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer;
-  background: rgb(var(--critical) / 0.12);
-  border: 1px solid rgb(var(--critical) / 0.45);
-  color: rgb(var(--fg));
+  @apply cursor-pointer rounded px-5 py-2.5 text-base font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-50;
+  background: color-mix(in srgb, var(--color-error) 15%, transparent);
+  border: 1px solid color-mix(in srgb, var(--color-error) 45%, transparent);
+  color: var(--color-on-surface);
 }
 
 .btn-danger:hover:not(:disabled) {
-  background: rgb(var(--critical) / 0.22);
+  background: color-mix(in srgb, var(--color-error) 25%, transparent);
 }
 
 .btn-ghost {
-  @apply px-3 py-2 rounded-md text-sm font-medium transition-colors cursor-pointer;
-  background: rgb(28 36 50);
-  border: 1px solid rgb(var(--border) / 0.4);
-  color: rgb(var(--fg));
+  @apply cursor-pointer rounded px-3 py-2 text-sm font-medium transition-colors;
+  background: var(--color-surface-container);
+  border: 1px solid color-mix(in srgb, var(--color-outline) 40%, transparent);
+  color: var(--color-on-surface);
 }
 
 .btn-ghost:hover {
-  background: rgb(38 48 64);
+  background: var(--color-surface-container-high);
 }
-
-/* ── Status badges ───────────────────────────────────────────────── */
 
 .status-ok {
   @apply rounded-full border px-3 py-1 text-xs font-medium;
-  background: rgb(var(--ok) / 0.15);
-  border-color: rgb(var(--ok) / 0.5);
-  color: rgb(var(--fg));
+  background: color-mix(in srgb, var(--color-secondary) 15%, transparent);
+  border-color: color-mix(in srgb, var(--color-secondary) 45%, transparent);
+  color: var(--color-on-surface);
 }
 
 .status-warn {
   @apply rounded-full border px-3 py-1 text-xs font-medium;
-  background: rgb(var(--warn) / 0.15);
-  border-color: rgb(var(--warn) / 0.5);
-  color: rgb(var(--fg));
+  background: color-mix(in srgb, var(--color-tertiary) 15%, transparent);
+  border-color: color-mix(in srgb, var(--color-tertiary) 45%, transparent);
+  color: var(--color-on-surface);
 }
 
 .status-critical {
   @apply rounded-full border px-3 py-1 text-xs font-medium;
-  background: rgb(var(--critical) / 0.15);
-  border-color: rgb(var(--critical) / 0.5);
-  color: rgb(var(--fg));
+  background: color-mix(in srgb, var(--color-error) 15%, transparent);
+  border-color: color-mix(in srgb, var(--color-error) 45%, transparent);
+  color: var(--color-on-surface);
 }
 
 .status-neutral {
   @apply rounded-full border px-3 py-1 text-xs font-medium;
-  background: rgb(28 36 50);
-  border-color: rgb(var(--border) / 0.5);
-  color: rgb(var(--fg));
+  background: var(--color-surface-container);
+  border-color: color-mix(in srgb, var(--color-outline) 45%, transparent);
+  color: var(--color-on-surface);
 }
 
-/* ── Form fields ─────────────────────────────────────────────────── */
-
 .field {
-  @apply w-full rounded-md px-3 py-2.5 text-base border;
-  background: rgb(30 40 55);
-  border-color: rgb(var(--border) / 0.6);
-  color: rgb(var(--fg));
+  @apply w-full rounded px-3 py-2.5 text-base;
+  background: var(--color-surface-container-lowest);
+  border: 1px solid color-mix(in srgb, var(--color-outline-variant) 20%, transparent);
+  color: var(--color-on-surface);
 }
 
 .field:focus {
   outline: none;
-  border-color: rgb(var(--accent));
-  box-shadow: 0 0 0 1px rgb(var(--accent) / 0.3);
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--color-primary) 35%, transparent);
 }
 
 .label {
-  @apply block text-sm font-medium mb-1.5;
-  color: rgb(var(--fg));
+  @apply mb-1.5 block text-sm font-medium;
+  color: var(--color-on-surface);
 }
 
-/* ── Code / output blocks ────────────────────────────────────────── */
-
 .code-block {
-  @apply rounded-md p-4 text-sm overflow-x-auto;
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-  background: rgb(14 20 30);
-  border: 1px solid rgb(var(--border) / 0.35);
-  color: rgb(195 205 220);
+  @apply overflow-x-auto rounded p-4 text-sm;
+  font-family: var(--font-mono);
+  background: var(--color-surface-container-lowest);
+  border: 1px solid color-mix(in srgb, var(--color-outline-variant) 35%, transparent);
+  color: var(--color-on-surface-variant);
+}
+
+.docs-scrollbar::-webkit-scrollbar {
+  width: 4px;
+}
+.docs-scrollbar::-webkit-scrollbar-track {
+  background: var(--color-background);
+}
+.docs-scrollbar::-webkit-scrollbar-thumb {
+  background: var(--color-surface-container-highest);
 }
