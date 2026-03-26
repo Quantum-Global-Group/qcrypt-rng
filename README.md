@@ -1,3 +1,13 @@
+---
+title: QCrypt RNG
+emoji: 🔐
+colorFrom: indigo
+colorTo: purple
+sdk: docker
+app_port: 7860
+pinned: false
+---
+
 # QCrypt RNG
 
 **Quantum-enhanced random number generation, post-quantum cryptography, and blockchain security.**
