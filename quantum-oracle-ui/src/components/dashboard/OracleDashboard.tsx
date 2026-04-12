@@ -5,6 +5,8 @@ import { useCallback, useEffect, useState } from 'react';
 import { LiveEntropyOraclePanel } from '@/components/dashboard/LiveEntropyOraclePanel';
 import { checkHealth, listFulfillmentRequests } from '@/utils/api';
 import type { FulfillmentRequestItem } from '@/types';
+import { GuidedTour } from '@/components/tours/GuidedTour';
+import { tours } from '@/components/tours/TourDefinitions';
 
 const PQC: {
   title: string;
@@ -80,29 +82,34 @@ export function OracleDashboard() {
   }, []);
 
   return (
-    <div className="min-w-0 text-on-surface">
-      <div className="min-w-0 space-y-8 py-6 sm:py-8">
-        {/* Hero */}
-        <section className="flex min-w-0 flex-col justify-between gap-6 md:flex-row md:items-end">
-          <div className="min-w-0">
-            <h2 className="mb-2 font-headline text-3xl font-bold tracking-tight text-on-surface">Quantum Randomness Oracle</h2>
-            <div className="flex flex-wrap items-center gap-3">
-              <div className="flex items-center gap-2 rounded-full border border-secondary/20 bg-secondary/10 px-3 py-1">
-                <span className="relative flex h-2 w-2">
-                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-secondary opacity-75" />
-                  <span className="relative inline-flex h-2 w-2 rounded-full bg-secondary" />
-                </span>
-                <span className="font-mono text-[10px] font-bold uppercase tracking-widest text-secondary">
-                  Verified Hardware Source: {apiOk ? 'ACTIVE' : apiOk === false ? 'DEGRADED' : '…'}
-                </span>
+    <GuidedTour
+      tourId="dashboard"
+      steps={tours.dashboard}
+      enabled={true}
+    >
+      <div className="min-w-0 text-on-surface">
+        <div className="min-w-0 space-y-8 py-6 sm:py-8">
+          {/* Hero */}
+          <section className="flex min-w-0 flex-col justify-between gap-6 md:flex-row md:items-end">
+            <div className="min-w-0">
+              <h2 className="mb-2 font-headline text-3xl font-bold tracking-tight text-on-surface">Quantum Randomness Oracle</h2>
+              <div className="flex flex-wrap items-center gap-3">
+                <div className="flex items-center gap-2 rounded-full border border-secondary/20 bg-secondary/10 px-3 py-1">
+                  <span className="relative flex h-2 w-2">
+                    <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-secondary opacity-75" />
+                    <span className="relative inline-flex h-2 w-2 rounded-full bg-secondary" />
+                  </span>
+                  <span className="font-mono text-[10px] font-bold uppercase tracking-widest text-secondary">
+                    Verified Hardware Source: {apiOk ? 'ACTIVE' : apiOk === false ? 'DEGRADED' : '…'}
+                  </span>
+                </div>
+                <span className="font-mono text-[10px] uppercase tracking-wider text-outline">Ref: QRNG-NODE-7721</span>
               </div>
-              <span className="font-mono text-[10px] uppercase tracking-wider text-outline">Ref: QRNG-NODE-7721</span>
             </div>
-          </div>
-        </section>
+          </section>
 
-        {/* Quick links — gateway to all platform features */}
-        <section className="flex min-w-0 flex-wrap gap-2">
+          {/* Quick links — gateway to all platform features */}
+          <section data-tour="quick-links" className="flex min-w-0 flex-wrap gap-2">
           {QUICK_LINKS.map((item) => (
             <Link
               key={item.href}
@@ -119,10 +126,12 @@ export function OracleDashboard() {
         </section>
 
         {/* Live entropy */}
-        <LiveEntropyOraclePanel />
+        <div data-tour="entropy-panel">
+          <LiveEntropyOraclePanel />
+        </div>
 
         {/* PQC algorithm cards */}
-        <section className="min-w-0 space-y-4">
+        <section data-tour="pqc-cards" className="min-w-0 space-y-4">
           <div className="flex flex-wrap items-center justify-between gap-2">
             <h2 className="font-label text-[11px] font-bold uppercase tracking-[0.1em] text-on-surface-variant">
               Post-Quantum Cryptography Suite
@@ -203,5 +212,6 @@ export function OracleDashboard() {
         </section>
       </div>
     </div>
+    </GuidedTour>
   );
 }

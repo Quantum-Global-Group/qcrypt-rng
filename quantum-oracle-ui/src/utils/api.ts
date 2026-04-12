@@ -477,3 +477,51 @@ export const getFulfillmentChains = (): Promise<ApiResponse<{ chains: Fulfillmen
 
 export const retryFulfillment = (requestId: string): Promise<ApiResponse<{ success: boolean; message?: string }>> =>
   requestJson(`/oracle/fulfillment/retry/${requestId}`, { method: 'POST' });
+
+// ─── Simple Wizard Helpers ───────────────────────────────────────────────────
+
+/** Generate random bytes (simple wrapper) */
+export const generateBytes = async (numBytes: number = 32): Promise<string> => {
+  const res = await generateQuantumBytes({ length: numBytes, format: 'hex', quantum_bits: 8 });
+  return res.data?.bytes || '';
+};
+
+/** Generate encryption key (simple wrapper) */
+export const generateKey = async (keySize: number = 32): Promise<string> => {
+  const res = await generateQuantumKey({ algorithm: 'AES', key_size: keySize, format: 'hex' });
+  const data = res.data as any;
+  return (data?.key || data?.private_key || '') as string;
+};
+
+/** Generate UUID (simple wrapper) */
+export const generateUUID = async (): Promise<string> => {
+  const res = await generateQuantumUUID({ version: 4, count: 1, format: 'standard' });
+  const data = res.data as any;
+  return (data || data?.[0] || '') as string;
+};
+
+/** Generate password (simple wrapper) */
+export const generatePassword = async (length: number = 16, includeSymbols: boolean = true): Promise<string> => {
+  const res = await generateQuantumPassword({
+    length,
+    include_uppercase: true,
+    include_lowercase: true,
+    include_numbers: true,
+    include_symbols: includeSymbols,
+    exclude_ambiguous: true,
+  });
+  const data = res.data as any;
+  return (data?.password || '') as string;
+};
+
+/** Encrypt text (simple wrapper using encryptData) */
+export const encryptText = async (text: string, password?: string): Promise<any> => {
+  return await encryptData(text, true, 'AES-256-GCM', password);
+};
+
+/** Decrypt text (simple wrapper) */
+export const decryptText = async (encryptedResponse: any): Promise<any> => {
+  // This requires the encrypted data structure from the API
+  // For now, return as-is - implement based on actual API response
+  return encryptedResponse;
+};

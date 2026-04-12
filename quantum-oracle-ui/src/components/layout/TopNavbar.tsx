@@ -3,8 +3,10 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useEffect, useState } from 'react';
-import { Activity, Settings } from 'lucide-react';
+import { Activity, Settings, Sparkles, Code2 } from 'lucide-react';
 import { checkHealth } from '@/utils/api';
+import { UserModeToggle } from '@/components/settings/UserModeToggle';
+import { useUserMode } from '@/contexts/UserModeContext';
 
 /** Route → display title for the top navbar. */
 const PAGE_TITLES: Record<string, string> = {
@@ -54,6 +56,7 @@ function getBreadcrumb(pathname: string): { section: string; sectionHref: string
 
 export function TopNavbar() {
   const pathname = usePathname();
+  const { isSimple } = useUserMode();
   const [apiOk, setApiOk] = useState<boolean | null>(null);
 
   useEffect(() => {
@@ -77,7 +80,7 @@ export function TopNavbar() {
   const crumb = getBreadcrumb(pathname);
 
   return (
-    <header className="sticky top-0 z-50 flex h-12 w-full min-w-0 items-center justify-between border-b border-outline-variant/10 bg-surface-container-low/95 px-4 backdrop-blur-sm sm:px-6">
+    <header className="sticky top-0 z-50 flex h-12 w-full min-w-0 items-center justify-between border-b border-outline-variant/10 bg-[#16161a] px-4 sm:px-6">
       {/* Left: branding + breadcrumb + title */}
       <div className="flex min-w-0 items-center gap-3">
         {/* Logo mark */}
@@ -106,6 +109,26 @@ export function TopNavbar() {
 
       {/* Right: status + actions */}
       <div className="flex shrink-0 items-center gap-2 sm:gap-3">
+        {/* Mode Indicator Badge */}
+        <div className="hidden items-center gap-1.5 rounded-full border border-outline-variant/20 bg-surface-container px-2.5 py-1 text-xs font-medium sm:flex">
+          {isSimple ? (
+            <>
+              <Sparkles className="h-3.5 w-3.5 text-emerald-400" />
+              <span className="text-emerald-400">Simple</span>
+            </>
+          ) : (
+            <>
+              <Code2 className="h-3.5 w-3.5 text-blue-400" />
+              <span className="text-blue-400">Developer</span>
+            </>
+          )}
+        </div>
+
+        {/* User Mode Toggle */}
+        <div data-tour="mode-toggle" className="hidden sm:block">
+          <UserModeToggle />
+        </div>
+        
         <div className="hidden items-center gap-2 text-[10px] font-medium text-on-surface-variant sm:flex">
           <span className="inline-flex items-center gap-1.5 rounded-full border border-outline-variant/20 bg-surface-container px-2 py-0.5">
             <span className="h-1.5 w-1.5 rounded-full bg-secondary" aria-hidden />

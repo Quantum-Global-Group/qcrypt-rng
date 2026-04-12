@@ -18,8 +18,11 @@ import {
   Shield,
   Sparkles,
   Zap,
+  Lock,
+  Key,
 } from 'lucide-react';
 import { useMediaQuery } from '@/hooks/useMediaQuery';
+import { useUserMode } from '@/contexts/UserModeContext';
 
 /* ─── types ─────────────────────────────────────────────────────────────────── */
 

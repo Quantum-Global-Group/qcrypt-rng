@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { IBM_Plex_Mono, IBM_Plex_Sans, IBM_Plex_Serif } from 'next/font/google';
 import './globals.css';
+import { Providers } from './lib/Providers';
 
 const ibmPlexSans = IBM_Plex_Sans({
   subsets: ['latin'],
@@ -49,7 +50,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <meta name="theme-color" content="#0a0a0b" />
       </head>
       <body className="bg-background text-on-surface antialiased font-sans">
-        {children}
+        <Providers>{children}</Providers>
       </body>
     </html>
   );
