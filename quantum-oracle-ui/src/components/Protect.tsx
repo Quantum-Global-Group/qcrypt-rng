@@ -343,7 +343,17 @@ export const Protect = () => {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* ── Encrypt / Decrypt ──────────────────────────────── */}
         <div className="section space-y-4">
-          <h2 className="text-lg font-bold text-white flex items-center gap-2">Encrypt / Decrypt <InfoPopover title="Encrypt / Decrypt" description="AES encryption with quantum-generated keys. Supports AES-256-GCM, AES-128-GCM, and AES-256-CBC modes, custom keys, and file encryption up to 10 MB." useCases={['Encrypt sensitive documents', 'Protect API payloads', 'File encryption with quantum keys']} /></h2>
+          <h2 className="text-lg font-bold text-on-surface flex items-center gap-2">
+            Encrypt / decrypt (documents &amp; text){' '}
+            <InfoPopover
+              title="Encrypt / Decrypt"
+              description="AES encryption with quantum-generated keys when not using a custom key. Supports AES-256-GCM, AES-128-GCM, and AES-256-CBC modes, optional custom keys, and file encryption up to the API limit (typically on the order of 10 MB)."
+              useCases={['Client or internal documents', 'Sensitive exports and attachments', 'API payloads and message bodies']}
+            />
+          </h2>
+          <p className="text-sm text-on-surface-variant">
+            <strong className="font-medium text-on-surface">Business use:</strong> switch to <strong className="font-medium text-on-surface">File</strong> to encrypt documents; use <strong className="font-medium text-on-surface">Text</strong> for structured payloads. Default keys use quantum-backed entropy from the platform RNG unless you supply your own key.
+          </p>
 
           {/* Algorithm */}
           <div>
@@ -418,7 +428,7 @@ export const Protect = () => {
           {decryptedText !== null && (
             <div className="flex items-center gap-3 pt-2 border-t border-slate-700/30">
               <Badge label="Verified" />
-              <span className="text-base text-white select-all">{decryptedText}</span>
+              <span className="text-base text-on-surface select-all">{decryptedText}</span>
             </div>
           )}
 
@@ -432,7 +442,18 @@ export const Protect = () => {
 
         {/* ── Sign / Verify ──────────────────────────────────── */}
         <div className="section space-y-4">
-          <h2 className="text-lg font-bold text-white flex items-center gap-2">Sign / Verify <InfoPopover title="Sign / Verify" description="Create and verify HMAC signatures using quantum-random keys. Supports SHA-256 and SHA-512 for message authentication and data integrity." useCases={['API request signing', 'Message authentication', 'Data integrity verification']} /></h2>
+          <h2 className="text-lg font-bold text-on-surface flex items-center gap-2">
+            Sign / verify (operations &amp; audits){' '}
+            <InfoPopover
+              title="Sign / Verify"
+              description="Create and verify HMAC signatures using keys from the platform. Supports SHA-256 and SHA-512 for message authentication and data integrity between services, partners, and internal audits."
+              useCases={['API request signing', 'Tamper-evident payloads', 'Operational and compliance checks']}
+            />
+          </h2>
+          <p className="text-sm text-on-surface-variant">
+            Use this for <strong className="font-medium text-on-surface">day-to-day business signing</strong>. For
+            long-term or regulated archives, combine with the post-quantum section below.
+          </p>
 
           <div>
             <label className="label">Algorithm</label>
@@ -491,7 +512,7 @@ export const Protect = () => {
 
       {/* ── Standalone Verify ────────────────────────────────── */}
       <div className="section space-y-4">
-        <h2 className="text-lg font-bold text-white flex items-center gap-2">Verify Any Signature <InfoPopover title="Verify Any Signature" description="Standalone signature verification. Paste any message, signature, and key to verify independently -- not limited to signatures created in this session." useCases={['Verify externally-produced signatures', 'Audit signature validity', 'Cross-system verification']} /></h2>
+        <h2 className="text-lg font-bold text-on-surface flex items-center gap-2">Verify Any Signature <InfoPopover title="Verify Any Signature" description="Standalone signature verification. Paste any message, signature, and key to verify independently -- not limited to signatures created in this session." useCases={['Verify externally-produced signatures', 'Audit signature validity', 'Cross-system verification']} /></h2>
         <p className="text-sm text-slate-400">Paste an externally-produced message, signature, and key to verify independently.</p>
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
           <div>
@@ -535,7 +556,19 @@ export const Protect = () => {
 
       {/* ── Hash / Password Protection ───────────────────────── */}
       <div className="section space-y-4">
-        <h2 className="text-lg font-bold text-white flex items-center gap-2">Hash / Password Protection <InfoPopover title="Hash / Password Protection" description="Quantum-salted hashing for data integrity and password storage. Supports SHA3-256, SHA3-512, PBKDF2-SHA256, and BLAKE2b-256 with configurable iterations." useCases={['Password hashing for storage', 'Data integrity checksums', 'Key derivation from passwords']} /></h2>
+        <h2 className="text-lg font-bold text-on-surface flex items-center gap-2">
+          Hash / password protection (clients &amp; workforce){' '}
+          <InfoPopover
+            title="Hash / Password Protection"
+            description="Salted hashing for data integrity and password storage. Password mode uses PBKDF2-SHA256 with configurable iterations; the API uses quantum-derived salt when enabled. Supports SHA3-256, SHA3-512, PBKDF2-SHA256, and BLAKE2b-256."
+            useCases={['Store customer or employee passwords safely', 'Integrity checksums for files and records', 'Key derivation from passwords']}
+          />
+        </h2>
+        <p className="text-sm text-on-surface-variant">
+          <strong className="font-medium text-on-surface">Password mode</strong> is for storing verifiers in your
+          database — never store plaintext passwords. Salts are generated with quantum-backed entropy when you hash
+          through this UI.
+        </p>
 
         {/* Mode toggle */}
         <div className="flex gap-2">
@@ -611,7 +644,7 @@ export const Protect = () => {
 
       {/* ── Post-Quantum Cryptography ────────────────────────── */}
       <div className="border-t border-slate-700/40 pt-6">
-        <h2 className="text-lg font-bold text-white mb-1 flex items-center gap-2">Post-Quantum Cryptography <InfoPopover title="Post-Quantum Cryptography" description="NIST-standardized lattice-based algorithms (DILITHIUM for signatures, KYBER for key exchange) that remain secure even against quantum computer attacks." useCases={['Future-proof digital signatures', 'Quantum-resistant key exchange', 'Blockchain wallet protection']} /></h2>
+        <h2 className="text-lg font-bold text-on-surface mb-1 flex items-center gap-2">Post-Quantum Cryptography <InfoPopover title="Post-Quantum Cryptography" description="NIST-standardized lattice-based algorithms (DILITHIUM for signatures, KYBER for key exchange) that remain secure even against quantum computer attacks." useCases={['Future-proof digital signatures', 'Quantum-resistant key exchange', 'Blockchain wallet protection']} /></h2>
         <p className="text-sm text-slate-400 mb-5">
           Quantum-safe signatures using NIST-standardized lattice-based algorithms. These keys remain secure even against quantum computers.
         </p>
@@ -619,7 +652,7 @@ export const Protect = () => {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* PQC Generate Key */}
           <div className="section space-y-4">
-            <h3 className="text-base font-semibold text-white flex items-center gap-2">Generate Quantum-Safe Key <InfoPopover title="Generate Quantum-Safe Key" description="Create DILITHIUM (signature) or KYBER (key exchange) key pairs at various NIST security levels. Keys can be exported as Base64 or Hex." useCases={['Generate post-quantum signing keys', 'Create quantum-resistant key pairs', 'Export keys for external systems']} /></h3>
+            <h3 className="text-base font-semibold text-on-surface flex items-center gap-2">Generate Quantum-Safe Key <InfoPopover title="Generate Quantum-Safe Key" description="Create DILITHIUM (signature) or KYBER (key exchange) key pairs at various NIST security levels. Keys can be exported as Base64 or Hex." useCases={['Generate post-quantum signing keys', 'Create quantum-resistant key pairs', 'Export keys for external systems']} /></h3>
             <div>
               <label className="label">Algorithm</label>
               <select value={pqcAlgorithm} onChange={(e) => setPqcAlgorithm(e.target.value)} className="field">
@@ -682,7 +715,7 @@ export const Protect = () => {
 
           {/* PQC Sign / Verify (signature algorithms only) */}
           <div className="section space-y-4">
-            <h3 className="text-base font-semibold text-white flex items-center gap-2">Quantum-Safe Sign / Verify <InfoPopover title="Quantum-Safe Sign / Verify" description="Sign and verify messages using post-quantum DILITHIUM, FALCON, or SPHINCS+ signatures. These signatures cannot be forged even with a quantum computer." useCases={['Quantum-resistant document signing', 'Blockchain transaction signatures', 'Long-term non-repudiation']} /></h3>
+            <h3 className="text-base font-semibold text-on-surface flex items-center gap-2">Quantum-Safe Sign / Verify <InfoPopover title="Quantum-Safe Sign / Verify" description="Sign and verify messages using post-quantum DILITHIUM, FALCON, or SPHINCS+ signatures. These signatures cannot be forged even with a quantum computer." useCases={['Quantum-resistant document signing', 'Blockchain transaction signatures', 'Long-term non-repudiation']} /></h3>
             {isPqcKemAlgo(pqcAlgorithm) ? (
               <p className="text-sm text-slate-400">KEM algorithms (KYBER, NTRU, SABER) are for key encapsulation only. Use the Kyber KEM section below for encapsulate/decapsulate workflow.</p>
             ) : (
@@ -751,7 +784,7 @@ export const Protect = () => {
 
       {/* ── Kyber Key Encapsulation (KEM) ─────────────────────── */}
       <div className="section space-y-4 border-t border-slate-700/40 pt-6">
-        <h2 className="text-lg font-bold text-white flex items-center gap-2">Kyber Key Encapsulation (KEM) <InfoPopover title="Kyber KEM" description="Key Encapsulation Mechanism for quantum-safe shared secrets. Recipient generates a keypair; sender encapsulates a shared secret with the public key; recipient decapsulates with the private key. Both obtain the same secret for symmetric encryption." useCases={['Quantum-safe key exchange', 'Establish shared secret between parties', 'Pre-quantum key agreement replacement']} /></h2>
+        <h2 className="text-lg font-bold text-on-surface flex items-center gap-2">Kyber Key Encapsulation (KEM) <InfoPopover title="Kyber KEM" description="Key Encapsulation Mechanism for quantum-safe shared secrets. Recipient generates a keypair; sender encapsulates a shared secret with the public key; recipient decapsulates with the private key. Both obtain the same secret for symmetric encryption." useCases={['Quantum-safe key exchange', 'Establish shared secret between parties', 'Pre-quantum key agreement replacement']} /></h2>
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* 1. Recipient: Generate keypair */}
           <div className="space-y-3">

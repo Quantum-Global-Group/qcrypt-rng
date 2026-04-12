@@ -1,0 +1,123 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# Stage 1 — Build liboqs from source
+#   Produces /usr/local/lib/liboqs.so and /usr/local/include/oqs/
+# ─────────────────────────────────────────────────────────────────────────────
+FROM python:3.11-slim AS liboqs-builder
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+        build-essential cmake git libssl-dev pkg-config \
+    && rm -rf /var/lib/apt/lists/*
+
+# Pin a tested release — update this sha when upgrading
+ARG LIBOQS_TAG=0.10.1
+RUN git clone --branch ${LIBOQS_TAG} --depth 1 \
+        https://github.com/open-quantum-safe/liboqs.git /liboqs
+
+WORKDIR /liboqs/build
+RUN cmake .. \
+        -DBUILD_SHARED_LIBS=ON \
+        -DOQS_BUILD_ONLY_LIB=ON \
+        -DOQS_USE_OPENSSL=ON \
+        -DCMAKE_BUILD_TYPE=Release \
+    && make -j$(nproc) \
+    && make install          # installs to /usr/local
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Stage 2 — Build liboqs-python wheel
+# ─────────────────────────────────────────────────────────────────────────────
+FROM python:3.11-slim AS wheel-builder
+
+COPY --from=liboqs-builder /usr/local /usr/local
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+        build-essential cmake libssl-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+# Ensure the shared library is found at build time
+ENV LD_LIBRARY_PATH=/usr/local/lib:${LD_LIBRARY_PATH}
+
+RUN pip install --upgrade pip \
+    && pip wheel --no-cache-dir --wheel-dir=/wheels liboqs-python
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Stage 3 — Production image  (Nginx + FastAPI + Next.js, HF-Spaces-compatible)
+# ─────────────────────────────────────────────────────────────────────────────
+FROM python:3.11-slim AS base
+
+# System packages: Nginx, curl, Node.js 20
+RUN apt-get update && apt-get install -y --no-install-recommends \
+        build-essential gcc nginx curl ca-certificates gnupg \
+    && mkdir -p /etc/apt/keyrings \
+    && curl -fsSL https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key \
+       | gpg --dearmor -o /etc/apt/keyrings/nodesource.gpg \
+    && echo "deb [signed-by=/etc/apt/keyrings/nodesource.gpg] https://deb.nodesource.com/node_20.x nodistro main" \
+       > /etc/apt/sources.list.d/nodesource.list \
+    && apt-get update && apt-get install -y --no-install-recommends nodejs \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copy liboqs shared library from builder
+COPY --from=liboqs-builder /usr/local/lib/liboqs.so* /usr/local/lib/
+COPY --from=liboqs-builder /usr/local/include/oqs   /usr/local/include/oqs
+RUN ldconfig    # update the linker cache
+
+# Copy pre-built liboqs-python wheel and install
+COPY --from=wheel-builder /wheels /wheels
+RUN pip install --no-cache-dir /wheels/*.whl
+
+WORKDIR /app
+
+# ── Python dependencies ───────────────────────────────────────────────────────
+COPY requirements.txt /app/
+RUN pip install --no-cache-dir --upgrade pip \
+    && pip install --no-cache-dir -r requirements.txt
+
+# ── Verify liboqs loaded correctly before proceeding ─────────────────────────
+RUN python3 -c "
+import oqs
+sigs = oqs.get_enabled_sig_mechanisms()
+kems = oqs.get_enabled_kem_mechanisms()
+assert 'Dilithium3' in sigs,  f'Dilithium3 missing from: {sigs}'
+assert 'Kyber768'   in kems,  f'Kyber768 missing from: {kems}'
+assert 'Falcon-512' in sigs,  f'Falcon-512 missing from: {sigs}'
+print('liboqs OK —', len(sigs), 'SIG mechanisms,', len(kems), 'KEM mechanisms')
+"
+
+# ── Next.js build ─────────────────────────────────────────────────────────────
+COPY quantum-oracle-ui/package.json quantum-oracle-ui/package-lock.json* /app/quantum-oracle-ui/
+WORKDIR /app/quantum-oracle-ui
+RUN npm ci --prefer-offline 2>/dev/null || npm install
+
+COPY quantum-oracle-ui/ /app/quantum-oracle-ui/
+RUN npm run build
+RUN cp -r .next/static .next/standalone/.next/static 2>/dev/null || true
+RUN cp -r public .next/standalone/public 2>/dev/null || true
+
+# ── Backend + configs ─────────────────────────────────────────────────────────
+WORKDIR /app
+COPY app/        /app/app/
+COPY run_api.py  /app/
+COPY nginx.spaces.conf /etc/nginx/conf.d/default.conf
+COPY start-spaces.sh   /app/start-spaces.sh
+
+RUN rm -f /etc/nginx/sites-enabled/default
+
+RUN mkdir -p /tmp/nginx /var/log/nginx /var/lib/nginx/body \
+    && chown -R 1000:1000 /tmp/nginx /var/log/nginx /var/lib/nginx \
+    && sed -i 's|/run/nginx.pid|/tmp/nginx/nginx.pid|g' /etc/nginx/nginx.conf \
+    && chmod +x /app/start-spaces.sh
+
+RUN useradd -m -u 1000 spacesuser \
+    && chown -R 1000:1000 /app
+USER 1000
+
+# ── Runtime environment ───────────────────────────────────────────────────────
+ENV REQUIRE_API_KEY=false         \
+    ENVIRONMENT=production        \
+    DEBUG=false                   \
+    LOG_LEVEL=INFO                \
+    PYTHONUNBUFFERED=1            \
+    # Tell liboqs-python where to find the shared lib at runtime
+    LD_LIBRARY_PATH=/usr/local/lib:${LD_LIBRARY_PATH}
+
+EXPOSE 7860
+CMD ["/app/start-spaces.sh"]

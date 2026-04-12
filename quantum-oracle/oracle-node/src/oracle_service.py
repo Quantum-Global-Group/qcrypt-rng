@@ -4,6 +4,7 @@ Main implementation of the quantum randomness oracle service
 """
 
 import asyncio
+import base64
 import json
 import logging
 import time
@@ -19,6 +20,7 @@ import os
 from app.quantum.qrng import get_quantum_rng
 from app.quantum.hardware_interface import get_quantum_hardware_manager
 from app.quantum.commitment import compute_commitment, compute_commitment_hex
+from app.quantum.pqc_falcon import get_oracle_falcon_signer
 
 
 @dataclass
@@ -35,6 +37,9 @@ class RandomnessRequest:
     randomness: Optional[int] = None
     randomness_bytes: Optional[bytes] = None
     commitment: Optional[str] = None
+    falcon_public_key: Optional[str] = None
+    commit_signature: Optional[str] = None
+    reveal_signature: Optional[str] = None
 
 
 class QuantumRandomnessOracleNode:
@@ -55,6 +60,7 @@ class QuantumRandomnessOracleNode:
         # Initialize quantum components
         self.qrng = get_quantum_rng()
         self.hw_manager = get_quantum_hardware_manager()
+        self.falcon_signer = get_oracle_falcon_signer()
         
         # Contract setup
         self.oracle_contract = self._setup_contract()
@@ -178,6 +184,32 @@ class QuantumRandomnessOracleNode:
             format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
         )
         return logging.getLogger(__name__)
+
+    def _build_falcon_payload(self, phase: str, request_id: int, value: str) -> bytes:
+        """Build a stable JSON payload for Falcon audit-signing."""
+        return json.dumps(
+            {
+                "phase": phase,
+                "request_id": str(request_id),
+                "value": value,
+            },
+            sort_keys=True,
+            separators=(",", ":"),
+        ).encode()
+
+    async def _sign_falcon_payload(self, phase: str, request_id: int, value: str) -> tuple[str, str]:
+        """
+        Sign an oracle payload with Falcon-512 for auditability.
+
+        Returns base64(signature), base64(public_key).
+        """
+        payload = self._build_falcon_payload(phase, request_id, value)
+        result = await self.falcon_signer.sign_oracle_payload(payload)
+        public_key = self.falcon_signer.public_key or b""
+        return (
+            base64.b64encode(result.signature).decode(),
+            base64.b64encode(public_key).decode(),
+        )
     
     async def start_service(self):
         """Start the oracle service to listen for requests and provide randomness"""
@@ -185,6 +217,8 @@ class QuantumRandomnessOracleNode:
         self.logger.info(f"Connected to blockchain: {self.config['blockchain_rpc_url']}")
         self.logger.info(f"Contract address: {self.config['contract_address']}")
         self.logger.info(f"Oracle node address: {self.account.address}")
+        await self.falcon_signer.initialize()
+        self.logger.info("Falcon oracle signer initialized for commit/reveal audit signatures")
         
         while True:
             try:
@@ -256,6 +290,9 @@ class QuantumRandomnessOracleNode:
                     randomness_bytes = quantum_result.data
                     randomness_int = int.from_bytes(randomness_bytes, "big")
                     commitment_hex = compute_commitment_hex(randomness_bytes)
+                    commit_signature, falcon_public_key = await self._sign_falcon_payload(
+                        "commit", req_id, commitment_hex
+                    )
 
                     success = await self._submit_commitment(req_id, commitment_hex)
                     if success:
@@ -264,6 +301,8 @@ class QuantumRandomnessOracleNode:
                         request.randomness = randomness_int
                         request.randomness_bytes = randomness_bytes
                         request.commitment = commitment_hex
+                        request.commit_signature = commit_signature
+                        request.falcon_public_key = falcon_public_key
                         self.logger.info(f"Commitment submitted for request {req_id}")
                     else:
                         self.logger.warning(f"Commitment submission failed for request {req_id}, will retry")
@@ -273,9 +312,14 @@ class QuantumRandomnessOracleNode:
                 if current_block < request.commit_block + self.commit_reveal_delay:
                     continue
 
+                reveal_signature, falcon_public_key = await self._sign_falcon_payload(
+                    "reveal", req_id, str(request.randomness)
+                )
                 success = await self._reveal_randomness(req_id, request.randomness)
                 if success:
                     request.fulfilled = True
+                    request.reveal_signature = reveal_signature
+                    request.falcon_public_key = falcon_public_key
                     self.fulfilled_requests[req_id] = self.pending_requests.pop(req_id)
                     self.logger.info(f"Successfully fulfilled request {req_id}")
                 else:

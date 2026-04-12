@@ -15,16 +15,13 @@ from app.config import settings
 from app.utils.logging import setup_logging, logger, get_performance_logger, get_security_logger
 from app.utils.middleware import rate_limit_middleware, api_key_middleware, monitoring_middleware
 from app.api.v2.endpoints import generate, quantum, health
-# Import new endpoints for demo
 from app.api.v2.endpoints import protect, blockchain, pqc_endpoints
-# Import monitoring endpoints
 from app.api.v2.endpoints import monitoring
-# Import hardware interface endpoints
 from app.api.v2.endpoints import hardware
-# Import quantum randomness oracle endpoints
 from app.api.v2.endpoints import oracle
-# Import quantum VRF endpoints
 from app.api.v2.endpoints import vrf
+from app.api.v2.endpoints import pqc_upgrades
+from app.billing import stripe_webhooks
 from app.api.v2.models.responses import ErrorResponse
 
 
@@ -50,6 +47,7 @@ async def lifespan(app: FastAPI):
     logger.info(f"Environment: {settings.environment}")
     logger.info("✅ Protection endpoints loaded")
     logger.info("✅ Post-Quantum Cryptography loaded")
+    logger.info("✅ PQC Upgrades loaded (Hybrid, Falcon, HQC)")
     logger.info("✅ Blockchain demo loaded")
     
     yield
@@ -253,6 +251,13 @@ app.include_router(
     tags=["Post-Quantum Cryptography"]
 )
 
+# PQC upgrades — Hybrid, Falcon, HQC
+app.include_router(
+    pqc_upgrades.router,
+    prefix=f"{settings.api_prefix}/pqc",
+    tags=["PQC Upgrades"]
+)
+
 # Blockchain demonstration
 app.include_router(
     blockchain.router,
@@ -265,6 +270,13 @@ app.include_router(
     monitoring.router,
     prefix=f"{settings.api_prefix}/monitoring",
     tags=["Monitoring & Analytics"]
+)
+
+# Billing and subscription lifecycle
+app.include_router(
+    stripe_webhooks.router,
+    prefix=settings.api_prefix,
+    tags=["Billing"]
 )
 
 # Quantum hardware interface

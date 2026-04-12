@@ -2,7 +2,6 @@
 
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
-import { Activity, Settings } from 'lucide-react';
 import { getQuantumEntropy, requestQuantumRandomness } from '@/utils/api';
 import type { OracleRequestResponse } from '@/types';
 
@@ -48,30 +47,7 @@ export function OracleRequestPage() {
 
   return (
     <div className="min-h-full bg-surface text-on-surface">
-      <header className="sticky top-0 z-40 flex h-14 w-full min-w-0 items-center justify-between gap-4 border-b border-outline-variant/10 bg-surface-container-low px-6">
-        <div className="flex min-w-0 items-center gap-3">
-          <h1 className="truncate text-base font-semibold tracking-tight text-on-surface">Request randomness</h1>
-          <span className="hidden h-4 w-px shrink-0 bg-outline-variant/30 sm:block" aria-hidden />
-          <div className="hidden min-w-0 items-center gap-2 sm:flex">
-            <span className="h-2 w-2 shrink-0 animate-pulse rounded-full bg-secondary" aria-hidden />
-            <span className="truncate text-[11px] font-medium text-secondary">System operational</span>
-          </div>
-        </div>
-        <div className="flex shrink-0 items-center gap-0.5 text-outline">
-          <span className="inline-flex rounded-md p-2" title="Live operations" aria-hidden>
-            <Activity className="h-5 w-5" strokeWidth={1.75} />
-          </span>
-          <Link
-            href="/settings"
-            className="inline-flex rounded-md p-2 transition-colors hover:bg-surface-container hover:text-on-surface"
-            aria-label="Settings"
-          >
-            <Settings className="h-5 w-5" strokeWidth={1.75} />
-          </Link>
-        </div>
-      </header>
-
-      <main className="mx-auto flex max-w-4xl flex-col items-center justify-start overflow-y-auto p-8">
+      <main className="flex w-full flex-col items-center justify-start overflow-y-auto py-8">
         <div className="w-full space-y-6">
           <div className="mb-8 flex flex-col gap-1">
             <h2 className="text-2xl font-bold tracking-tight text-on-surface">Configure request</h2>
@@ -179,7 +155,7 @@ export function OracleRequestPage() {
                 {error && <p className="text-sm text-error">{error}</p>}
 
                 <div className="flex items-center justify-end gap-4 pt-4">
-                  <Link href="/" className="text-xs font-medium uppercase tracking-widest text-outline hover:text-on-surface">
+                  <Link href="/dashboard" className="text-xs font-medium uppercase tracking-widest text-outline hover:text-on-surface">
                     Discard
                   </Link>
                   <button

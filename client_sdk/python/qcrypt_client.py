@@ -90,7 +90,25 @@ class QCryptClient:
             raise QCryptAPIError(f"API request failed: {str(e)}")
         except json.JSONDecodeError:
             raise QCryptAPIError("Invalid JSON response from API")
-    
+
+    def _make_form_request(self, endpoint: str, data: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        POST application/x-www-form-urlencoded (matches FastAPI Form(...) endpoints).
+        """
+        url = f"{self.base_url}{endpoint}"
+        try:
+            response = self.session.post(
+                url,
+                data=data,
+                headers={"Content-Type": "application/x-www-form-urlencoded"},
+            )
+            response.raise_for_status()
+            return response.json()
+        except requests.exceptions.RequestException as e:
+            raise QCryptAPIError(f"API request failed: {str(e)}")
+        except json.JSONDecodeError:
+            raise QCryptAPIError("Invalid JSON response from API")
+
     def generate_bytes(
         self, 
         length: int, 
@@ -345,7 +363,95 @@ class QCryptClient:
         }
         
         return self._make_request('POST', '/api/v2/pqc/assess-threat', payload)
-    
+
+    def generate_hybrid_kem_keypair(self, encoding: str = "base64") -> Dict[str, Any]:
+        """
+        Generate a hybrid Kyber768 + X25519 key pair (receiver keys for hybrid KEM).
+
+        Args:
+            encoding: Key encoding for wire format: ``base64`` or ``hex``.
+
+        Returns:
+            API ``BaseResponse`` JSON including ``data`` with public/private key material.
+        """
+        return self._make_form_request(
+            "/api/v2/pqc/hybrid/kem/generate",
+            {"encoding": encoding},
+        )
+
+    def encapsulate_hybrid_kem(
+        self,
+        kyber_public_key: str,
+        x25519_public_key: str,
+        encoding: str = "base64",
+    ) -> Dict[str, Any]:
+        """
+        Sender-side hybrid KEM encapsulation to the receiver's public keys.
+
+        Args:
+            kyber_public_key: Kyber768 public key (base64 or hex per ``encoding``).
+            x25519_public_key: X25519 public key (base64 or hex per ``encoding``).
+            encoding: ``base64`` or ``hex`` for keys and returned ciphertexts.
+
+        Returns:
+            API response with ``kyber_ciphertext``, ``x25519_ciphertext``, ``combined_secret``.
+        """
+        return self._make_form_request(
+            "/api/v2/pqc/hybrid/kem/encapsulate",
+            {
+                "kyber_public_key": kyber_public_key,
+                "x25519_public_key": x25519_public_key,
+                "encoding": encoding,
+            },
+        )
+
+    def decapsulate_hybrid_kem(
+        self,
+        kyber_private_key: str,
+        x25519_private_key: str,
+        kyber_ciphertext: str,
+        x25519_ciphertext: str,
+        encoding: str = "base64",
+    ) -> Dict[str, Any]:
+        """
+        Receiver-side hybrid KEM decapsulation using private keys and ciphertexts.
+
+        The returned ``combined_secret`` should match the sender's ``combined_secret``
+        from :meth:`encapsulate_hybrid_kem` when both sides use the same encoding.
+
+        Args:
+            kyber_private_key: Kyber768 secret key.
+            x25519_private_key: X25519 secret key.
+            kyber_ciphertext: Kyber ciphertext from encapsulation.
+            x25519_ciphertext: X25519 peer public share from encapsulation.
+            encoding: ``base64`` or ``hex`` for all key/ciphertext material.
+
+        Returns:
+            API response with ``combined_secret`` and metadata.
+        """
+        return self._make_form_request(
+            "/api/v2/pqc/hybrid/kem/decapsulate",
+            {
+                "kyber_private_key": kyber_private_key,
+                "x25519_private_key": x25519_private_key,
+                "kyber_ciphertext": kyber_ciphertext,
+                "x25519_ciphertext": x25519_ciphertext,
+                "encoding": encoding,
+            },
+        )
+
+    def get_billing_usage(self) -> Dict[str, Any]:
+        """
+        Return usage and tier limits for the configured API key.
+
+        Requires ``api_key`` to be set on the client (``X-API-Key`` header).
+
+        Returns:
+            Dictionary with ``tier``, ``limits`` (``max_bytes``, ``max_requests``),
+            and ``usage`` (``requests_used``, ``bytes_used``, ``reset_time``).
+        """
+        return self._make_request("GET", "/api/v2/billing/usage")
+
     def create_blockchain_wallet(
         self,
         wallet_type: str = "both"

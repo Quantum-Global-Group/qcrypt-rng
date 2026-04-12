@@ -33,7 +33,7 @@ export default function ApiReferencePage() {
 
   return (
     <div className="flex h-[calc(100vh-0px)] flex-col overflow-hidden bg-background text-on-surface">
-      <header className="flex h-16 shrink-0 items-center justify-between border-b border-outline-variant/10 bg-background px-6">
+      <header className="-mx-5 flex h-16 shrink-0 items-center justify-between border-b border-outline-variant/10 bg-background px-5 sm:-mx-8 sm:px-8 lg:-mx-10 lg:px-10 xl:-mx-12 xl:px-12">
         <div className="flex items-center gap-8">
           <span className="text-xl font-black tracking-widest text-on-surface">ORACLE_TERMINAL</span>
           <nav className="hidden items-center gap-6 md:flex">

@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { useCallback, useState } from 'react';
 import {
   configureFulfillmentChain,
@@ -114,34 +115,22 @@ export function FulfillmentWizard() {
   };
 
   return (
-    <div className="relative flex min-h-[calc(100vh-0px)] flex-col overflow-hidden bg-background">
-      <div className="pointer-events-none absolute inset-0 opacity-[0.07]">
-        <div className="technical-grid absolute inset-0 p-8 font-mono text-[10px] leading-relaxed">
-          <p>DEBUG [14:22:01] INBOUND_HEX_PACKET: 0x4a2f88... [VERIFIED]</p>
-          <p>INFO [14:22:04] QUANTUM_RELAY_INITIATED: SECTOR_7G</p>
-          <p>TRACE [14:22:05] HASH_CONSENSUS_SYNC: 99.82%</p>
+    <div className="flex min-h-0 min-w-0 flex-1 flex-col bg-surface text-on-surface">
+      <header className="sticky top-0 z-10 -mx-5 flex h-14 shrink-0 items-center justify-between gap-4 border-b border-outline-variant/10 bg-surface-container-low px-5 sm:-mx-8 sm:px-8 lg:-mx-10 lg:px-10 xl:-mx-12 xl:px-12">
+        <div className="min-w-0">
+          <h1 className="truncate text-base font-semibold tracking-tight text-on-surface">Fulfillment</h1>
+          <p className="font-mono text-[10px] text-outline">On-chain request wizard · same session as the rest of QCrypt</p>
         </div>
-      </div>
-
-      <header className="relative z-10 flex h-16 shrink-0 items-center justify-between border-b border-outline-variant/10 bg-background px-6">
-        <div className="flex items-center gap-8">
-          <span className="text-xl font-black tracking-widest text-on-surface">ORACLE_TERMINAL</span>
-          <nav className="hidden items-center gap-6 md:flex">
-            <span className="text-sm font-medium text-outline">Mainnet</span>
-            <span className="text-sm font-bold text-primary">Testnet</span>
-            <a href="/docs/api" className="text-sm font-medium text-outline hover:text-on-surface">
-              Docs
-            </a>
-          </nav>
-        </div>
-        <div className="flex items-center gap-2 text-outline">
-          <span className="material-symbols-outlined p-2 text-[20px]">notifications</span>
-          <span className="material-symbols-outlined p-2 text-[20px]">settings</span>
+        <div className="flex shrink-0 items-center gap-3">
+          <span className="hidden font-mono text-[10px] text-outline sm:inline">Testnet-ready</span>
+          <Link href="/docs/api" className="text-sm font-medium text-primary hover:underline">
+            API docs
+          </Link>
         </div>
       </header>
 
-      <div className="relative z-10 flex flex-1 flex-col gap-0 overflow-hidden lg:flex-row">
-        <div className="w-full shrink-0 p-6 lg:w-96 lg:overflow-y-auto">
+      <div className="flex min-h-0 flex-1 flex-col gap-0 overflow-hidden lg:flex-row">
+        <div className="w-full shrink-0 py-6 sm:py-6 lg:w-96 lg:overflow-y-auto lg:pr-2">
           <div className="flex flex-col gap-6 rounded-xl border border-outline-variant/10 bg-surface-container-highest/80 p-6 shadow-2xl backdrop-blur-xl">
             <div>
               <h2 className="flex items-center gap-2 text-sm font-bold uppercase tracking-widest text-on-surface">
@@ -362,15 +351,17 @@ export function FulfillmentWizard() {
           </div>
         </div>
 
-        <div className="flex min-h-[320px] flex-1 flex-col gap-6 overflow-hidden p-6 lg:min-h-0">
-          <div>
-            <h1 className="text-2xl font-black tracking-tight text-on-surface">Fulfillment — On-Chain Request Wizard (V3)</h1>
-            <p className="font-mono text-xs text-outline">TERMINAL_INSTANCE: PID_9921 // Configure chain, then submit contract request.</p>
+        <div className="flex min-h-[320px] flex-1 flex-col gap-6 overflow-hidden py-6 pl-2 lg:min-h-0 lg:pl-4">
+          <div className="min-w-0">
+            <h2 className="text-lg font-semibold tracking-tight text-on-surface">Configure & execute</h2>
+            <p className="mt-1 font-mono text-xs text-outline">
+              Set chain credentials, then submit a contract fulfillment request. Logs stream below.
+            </p>
           </div>
 
-          <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-xl border border-white/5 bg-surface-container-lowest">
-            <div className="flex items-center justify-between border-b border-white/5 bg-surface-container-low p-3">
-              <span className="text-[10px] font-bold uppercase tracking-widest text-outline">Live Execution Stream</span>
+          <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-xl border border-outline-variant/15 bg-surface-container-lowest">
+            <div className="flex items-center justify-between border-b border-outline-variant/15 bg-surface-container-low p-3">
+              <span className="text-[10px] font-bold uppercase tracking-widest text-outline">Live execution stream</span>
               <div className="flex gap-1">
                 <div className="h-2 w-2 rounded-full bg-error/40" />
                 <div className="h-2 w-2 rounded-full bg-tertiary/40" />
@@ -406,15 +397,15 @@ export function FulfillmentWizard() {
         </div>
       </div>
 
-      <footer className="relative z-10 flex h-8 shrink-0 items-center justify-between border-t border-white/5 bg-surface-container-lowest px-6 text-[9px] font-mono uppercase tracking-widest text-outline/60">
-        <div className="flex items-center gap-4">
+      <footer className="flex h-9 shrink-0 items-center justify-between border-t border-outline-variant/10 bg-surface-container-low px-5 text-[9px] font-mono uppercase tracking-widest text-outline/70 sm:px-8 lg:px-10 xl:px-12">
+        <div className="flex min-w-0 items-center gap-3">
           <div className="flex items-center gap-1.5">
-            <div className="h-2 w-2 animate-pulse rounded-full bg-secondary" />
-            <span>System Online</span>
+            <div className="h-1.5 w-1.5 shrink-0 animate-pulse rounded-full bg-secondary" />
+            <span>Session</span>
           </div>
-          <span>Shard: 0xA19B2</span>
+          <span className="truncate text-outline/50">QCrypt fulfillment</span>
         </div>
-        <span className="font-bold text-primary">Secure Session Verified</span>
+        <span className="shrink-0 font-semibold text-primary">Ready</span>
       </footer>
     </div>
   );

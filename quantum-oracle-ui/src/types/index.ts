@@ -276,6 +276,58 @@ export interface KemDecapsulateResponse {
   encoding: string;
 }
 
+export interface HybridKemKeypairResponse {
+  kyber_public_key: string;
+  kyber_private_key: string;
+  x25519_public_key: string;
+  x25519_private_key: string;
+  algorithm: string;
+  encoding: string;
+  key_sizes?: {
+    kyber_public_key_bytes: number;
+    kyber_private_key_bytes: number;
+    x25519_public_key_bytes: number;
+    x25519_private_key_bytes: number;
+  };
+}
+
+export interface HybridKemEncapsulateResponse {
+  kyber_ciphertext: string;
+  x25519_ciphertext: string;
+  combined_secret: string;
+  algorithm: string;
+  encoding: string;
+  key_sizes?: {
+    kyber_ciphertext_bytes: number;
+    x25519_ciphertext_bytes: number;
+    combined_secret_bytes: number;
+  };
+}
+
+export interface HybridKemDecapsulateResponse {
+  combined_secret: string;
+  algorithm: string;
+  encoding: string;
+  key_sizes?: {
+    combined_secret_bytes: number;
+    kyber_ciphertext_bytes: number;
+    x25519_ciphertext_bytes: number;
+  };
+}
+
+export interface BillingUsageResponse {
+  tier: string;
+  limits: {
+    max_bytes: number;
+    max_requests: number;
+  };
+  usage: {
+    requests_used: number;
+    bytes_used: number;
+    reset_time: string | null;
+  };
+}
+
 // Oracle fulfillment types
 export interface FulfillmentChainConfig {
   chain: string;

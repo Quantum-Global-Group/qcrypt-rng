@@ -353,8 +353,8 @@ export const QuantumRNG = () => {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* ── Request Randomness ──────────────────────────────── */}
         <div className="section space-y-4">
-          <h2 className="text-lg font-bold text-white flex items-center gap-2">Request Randomness <InfoPopover title="Request Randomness" description="Request quantum randomness from the oracle for smart contracts. A Keccak-256 commitment is generated before reveal so randomness cannot be predicted or manipulated." useCases={['On-chain random number requests', 'Smart contract randomness', 'Commit-reveal for fairness']} /></h2>
-          <p className="text-sm text-slate-400">Request quantum randomness from the oracle for smart contracts. A commitment is generated before reveal so randomness cannot be predicted or manipulated.</p>
+          <h2 className="text-lg font-bold text-on-surface flex items-center gap-2">Request Randomness <InfoPopover title="Request Randomness" description="Request quantum randomness from the oracle for smart contracts. A Keccak-256 commitment is generated before reveal so randomness cannot be predicted or manipulated." useCases={['On-chain random number requests', 'Smart contract randomness', 'Commit-reveal for fairness']} /></h2>
+          <p className="text-sm text-on-surface-variant">Request quantum randomness from the oracle for smart contracts. A commitment is generated before reveal so randomness cannot be predicted or manipulated.</p>
           <div>
             <label className="label">Bytes to Generate</label>
             <input type="number" min={1} max={1024} value={oracleBytes} onChange={(e) => setOracleBytes(Number(e.target.value))} className="field" />
@@ -389,7 +389,7 @@ export const QuantumRNG = () => {
 
         {/* ── Random Bytes (upgraded: presets + warning) ──────── */}
         <div className="section space-y-4">
-          <h2 className="text-lg font-bold text-white flex items-center gap-2">Random Bytes <InfoPopover title="Random Bytes" description="Generate raw quantum random bytes using configurable qubit counts. Output in hexadecimal, Base64, or array format with entropy analysis." useCases={['Cryptographic nonces', 'Seed material for key generation', 'Scientific simulations']} /></h2>
+          <h2 className="text-lg font-bold text-on-surface flex items-center gap-2">Random Bytes <InfoPopover title="Random Bytes" description="Generate raw quantum random bytes using configurable qubit counts. Output in hexadecimal, Base64, or array format with entropy analysis." useCases={['Cryptographic nonces', 'Seed material for key generation', 'Scientific simulations']} /></h2>
           <div>
             <label className="label">Quick Presets</label>
             <div className="flex flex-wrap gap-2">
@@ -428,7 +428,7 @@ export const QuantumRNG = () => {
 
         {/* ── Cryptographic Keys (upgraded: format + download) ── */}
         <div className="section space-y-4">
-          <h2 className="text-lg font-bold text-white flex items-center gap-2">Cryptographic Keys <InfoPopover title="Cryptographic Keys" description="Generate AES, RSA, or ECDSA keys with quantum-enhanced entropy. Choose key size and output format (Base64, Hex, or PEM)." useCases={['AES encryption keys', 'RSA key pair generation', 'ECDSA signing keys']} /></h2>
+          <h2 className="text-lg font-bold text-on-surface flex items-center gap-2">Cryptographic Keys <InfoPopover title="Cryptographic Keys" description="Generate AES, RSA, or ECDSA keys with quantum-enhanced entropy. Choose key size and output format (Base64, Hex, or PEM)." useCases={['AES encryption keys', 'RSA key pair generation', 'ECDSA signing keys']} /></h2>
           <div>
             <label className="label">Algorithm</label>
             <select value={keyAlgorithm} onChange={(e) => setKeyAlgorithm(e.target.value as 'AES' | 'RSA' | 'ECDSA')} className="field">
@@ -472,7 +472,7 @@ export const QuantumRNG = () => {
 
         {/* ── Quantum UUID ────────────────────────────────────── */}
         <div className="section space-y-4">
-          <h2 className="text-lg font-bold text-white flex items-center gap-2">Quantum UUID <InfoPopover title="Quantum UUID" description="RFC4122-compliant version 4 UUIDs generated with quantum randomness instead of pseudo-random sources. Generate up to 50 at once." useCases={['Database primary keys', 'Distributed system identifiers', 'Session identifiers']} /></h2>
+          <h2 className="text-lg font-bold text-on-surface flex items-center gap-2">Quantum UUID <InfoPopover title="Quantum UUID" description="RFC4122-compliant version 4 UUIDs generated with quantum randomness instead of pseudo-random sources. Generate up to 50 at once." useCases={['Database primary keys', 'Distributed system identifiers', 'Session identifiers']} /></h2>
           <div>
             <label className="label">Count</label>
             <input type="number" min={1} max={50} value={uuidCount} onChange={(e) => setUuidCount(Number(e.target.value))} className="field" />
@@ -492,31 +492,31 @@ export const QuantumRNG = () => {
 
         {/* ── Secure Password (upgraded: toggles + strength) ─── */}
         <div className="section space-y-4">
-          <h2 className="text-lg font-bold text-white flex items-center gap-2">Secure Password <InfoPopover title="Secure Password" description="Generate quantum-random passwords with configurable character sets, length, and ambiguous character exclusion. Includes a strength meter based on entropy." useCases={['User account passwords', 'Service credentials', 'Master passwords']} /></h2>
+          <h2 className="text-lg font-bold text-on-surface flex items-center gap-2">Secure Password <InfoPopover title="Secure Password" description="Generate quantum-random passwords with configurable character sets, length, and ambiguous character exclusion. Includes a strength meter based on entropy." useCases={['User account passwords', 'Service credentials', 'Master passwords']} /></h2>
           <div>
             <label className="label">Length</label>
             <input type="number" min={8} max={64} value={passwordLength} onChange={(e) => setPasswordLength(Number(e.target.value))} className="field" />
           </div>
           <div className="grid grid-cols-2 gap-x-4 gap-y-2">
-            <label className="flex items-center gap-2 text-sm text-slate-300 cursor-pointer">
-              <input type="checkbox" checked={pwUpper} onChange={(e) => setPwUpper(e.target.checked)} className="rounded border-slate-600" />
+            <label className="flex items-center gap-2 text-sm text-on-surface-variant cursor-pointer">
+              <input type="checkbox" checked={pwUpper} onChange={(e) => setPwUpper(e.target.checked)} className="rounded border-outline-variant" />
               Uppercase (A-Z)
             </label>
-            <label className="flex items-center gap-2 text-sm text-slate-300 cursor-pointer">
-              <input type="checkbox" checked={pwLower} onChange={(e) => setPwLower(e.target.checked)} className="rounded border-slate-600" />
+            <label className="flex items-center gap-2 text-sm text-on-surface-variant cursor-pointer">
+              <input type="checkbox" checked={pwLower} onChange={(e) => setPwLower(e.target.checked)} className="rounded border-outline-variant" />
               Lowercase (a-z)
             </label>
-            <label className="flex items-center gap-2 text-sm text-slate-300 cursor-pointer">
-              <input type="checkbox" checked={pwNumbers} onChange={(e) => setPwNumbers(e.target.checked)} className="rounded border-slate-600" />
+            <label className="flex items-center gap-2 text-sm text-on-surface-variant cursor-pointer">
+              <input type="checkbox" checked={pwNumbers} onChange={(e) => setPwNumbers(e.target.checked)} className="rounded border-outline-variant" />
               Numbers (0-9)
             </label>
-            <label className="flex items-center gap-2 text-sm text-slate-300 cursor-pointer">
-              <input type="checkbox" checked={pwSymbols} onChange={(e) => setPwSymbols(e.target.checked)} className="rounded border-slate-600" />
+            <label className="flex items-center gap-2 text-sm text-on-surface-variant cursor-pointer">
+              <input type="checkbox" checked={pwSymbols} onChange={(e) => setPwSymbols(e.target.checked)} className="rounded border-outline-variant" />
               Symbols (!@#...)
             </label>
           </div>
-          <label className="flex items-center gap-2 text-sm text-slate-300 cursor-pointer">
-            <input type="checkbox" checked={pwExcludeAmbiguous} onChange={(e) => setPwExcludeAmbiguous(e.target.checked)} className="rounded border-slate-600" />
+          <label className="flex items-center gap-2 text-sm text-on-surface-variant cursor-pointer">
+            <input type="checkbox" checked={pwExcludeAmbiguous} onChange={(e) => setPwExcludeAmbiguous(e.target.checked)} className="rounded border-outline-variant" />
             Exclude ambiguous (0, O, l, I)
           </label>
           <button
@@ -529,10 +529,10 @@ export const QuantumRNG = () => {
           {pwStrength && (
             <div className="space-y-1 pt-1">
               <div className="flex items-center justify-between text-xs">
-                <span className="text-slate-400">Strength</span>
-                <span className="text-slate-200">{pwStrength.label}</span>
+                <span className="text-on-surface-variant">Strength</span>
+                <span className="text-on-surface">{pwStrength.label}</span>
               </div>
-              <div className="w-full h-2 rounded-full bg-slate-700">
+              <div className="w-full h-2 rounded-full bg-surface-container-high">
                 <div className={`h-2 rounded-full ${pwStrength.color} transition-all`} style={{ width: `${pwStrength.pct}%` }} />
               </div>
             </div>
@@ -541,14 +541,14 @@ export const QuantumRNG = () => {
 
         {/* ── Session Token (new) ─────────────────────────────── */}
         <div className="section space-y-4">
-          <h2 className="text-lg font-bold text-white flex items-center gap-2">Session Token <InfoPopover title="Session Token" description="Generate quantum-random bearer tokens for API authentication and session management. Supports URL-safe encoding and configurable expiry from 1 hour to 30 days." useCases={['API authentication tokens', 'Session management', 'OAuth bearer tokens']} /></h2>
-          <p className="text-sm text-slate-400">Generate quantum-random bearer tokens for API authentication and session management.</p>
+          <h2 className="text-lg font-bold text-on-surface flex items-center gap-2">Session Token <InfoPopover title="Session Token" description="Generate quantum-random bearer tokens for API authentication and session management. Supports URL-safe encoding and configurable expiry from 1 hour to 30 days." useCases={['API authentication tokens', 'Session management', 'OAuth bearer tokens']} /></h2>
+          <p className="text-sm text-on-surface-variant">Generate quantum-random bearer tokens for API authentication and session management.</p>
           <div>
             <label className="label">Length (bytes)</label>
             <input type="number" min={16} max={128} value={tokenLength} onChange={(e) => setTokenLength(Number(e.target.value))} className="field" />
           </div>
-          <label className="flex items-center gap-2 text-sm text-slate-300 cursor-pointer">
-            <input type="checkbox" checked={tokenUrlSafe} onChange={(e) => setTokenUrlSafe(e.target.checked)} className="rounded border-slate-600" />
+          <label className="flex items-center gap-2 text-sm text-on-surface-variant cursor-pointer">
+            <input type="checkbox" checked={tokenUrlSafe} onChange={(e) => setTokenUrlSafe(e.target.checked)} className="rounded border-outline-variant" />
             URL-safe encoding
           </label>
           <div>
@@ -576,8 +576,8 @@ export const QuantumRNG = () => {
 
         {/* ── Batch Random Bytes ──────────────────────────────── */}
         <div className="section space-y-4">
-          <h2 className="text-lg font-bold text-white flex items-center gap-2">Batch Random Bytes <InfoPopover title="Batch Random Bytes" description="Generate multiple quantum random samples in a single API call with optional parallel processing for high-volume and low-latency use cases." useCases={['High-volume random generation', 'Parallel cryptographic operations', 'Bulk nonce creation']} /></h2>
-          <p className="text-sm text-slate-400">Generate multiple quantum random samples in a single request for high-volume use cases.</p>
+          <h2 className="text-lg font-bold text-on-surface flex items-center gap-2">Batch Random Bytes <InfoPopover title="Batch Random Bytes" description="Generate multiple quantum random samples in a single API call with optional parallel processing for high-volume and low-latency use cases." useCases={['High-volume random generation', 'Parallel cryptographic operations', 'Bulk nonce creation']} /></h2>
+          <p className="text-sm text-on-surface-variant">Generate multiple quantum random samples in a single request for high-volume use cases.</p>
           <div>
             <label className="label">Number of Samples</label>
             <input type="number" min={1} max={20} value={batchCount} onChange={(e) => setBatchCount(Number(e.target.value))} className="field" />
@@ -602,8 +602,8 @@ export const QuantumRNG = () => {
               <option value="array">Array</option>
             </select>
           </div>
-          <label className="flex items-center gap-2 text-sm text-slate-300 cursor-pointer">
-            <input type="checkbox" checked={batchParallel} onChange={(e) => setBatchParallel(e.target.checked)} className="rounded border-slate-600" />
+          <label className="flex items-center gap-2 text-sm text-on-surface-variant cursor-pointer">
+            <input type="checkbox" checked={batchParallel} onChange={(e) => setBatchParallel(e.target.checked)} className="rounded border-outline-variant" />
             Parallel processing
           </label>
           <button onClick={handleBatchGenerate} disabled={loadingAction === 'batch'} className="w-full btn-primary">
@@ -613,8 +613,8 @@ export const QuantumRNG = () => {
 
         {/* ── Batch Oracle Requests ───────────────────────────── */}
         <div className="section space-y-4">
-          <h2 className="text-lg font-bold text-white flex items-center gap-2">Batch Oracle Requests <InfoPopover title="Batch Oracle Requests" description="Request multiple oracle commitments in one call with optional scheduled delivery block and target chain. Each request gets its own commitment for independent verification." useCases={['Fair NFT mints', 'Lottery and raffle systems', 'Gaming random events']} /></h2>
-          <p className="text-sm text-slate-400">Request multiple oracle commitments in one call. Ideal for fair mints, lotteries, and gaming applications.</p>
+          <h2 className="text-lg font-bold text-on-surface flex items-center gap-2">Batch Oracle Requests <InfoPopover title="Batch Oracle Requests" description="Request multiple oracle commitments in one call with optional scheduled delivery block and target chain. Each request gets its own commitment for independent verification." useCases={['Fair NFT mints', 'Lottery and raffle systems', 'Gaming random events']} /></h2>
+          <p className="text-sm text-on-surface-variant">Request multiple oracle commitments in one call. Ideal for fair mints, lotteries, and gaming applications.</p>
           <div>
             <label className="label">Number of Requests</label>
             <input type="number" min={1} max={50} value={batchOracleCount} onChange={(e) => setBatchOracleCount(Number(e.target.value))} className="field" />
@@ -650,7 +650,7 @@ export const QuantumRNG = () => {
         <div className="space-y-4">
           {/* Header + actions */}
           <div className="flex items-center justify-between flex-wrap gap-2">
-            <h3 className="text-base font-bold text-white">Results ({filteredResults.length}{filteredResults.length !== results.length ? ` of ${results.length}` : ''})</h3>
+            <h3 className="text-base font-bold text-on-surface">Results ({filteredResults.length}{filteredResults.length !== results.length ? ` of ${results.length}` : ''})</h3>
             <div className="flex gap-2">
               <button onClick={copyAllResults} className="btn-ghost">Copy All</button>
               <button onClick={() => setResults([])} className="btn-ghost">Clear All</button>
@@ -663,7 +663,7 @@ export const QuantumRNG = () => {
               <button
                 key={f}
                 onClick={() => setResultFilter(f)}
-                className={`text-xs px-3 py-1 rounded-full transition-colors ${resultFilter === f ? 'bg-indigo-600 text-white' : 'bg-slate-800 text-slate-400 hover:text-white'}`}
+                className={`rounded-full px-3 py-1 text-xs transition-colors ${resultFilter === f ? 'bg-primary-container text-on-primary-container' : 'bg-surface-container-high text-on-surface-variant hover:text-on-surface'}`}
               >
                 {f}
               </button>
@@ -679,8 +679,8 @@ export const QuantumRNG = () => {
                 {/* Collapsed header -- always visible */}
                 <div className="flex items-center justify-between gap-3">
                   <button onClick={() => toggleExpanded(r.id)} className="flex items-center gap-2 text-left flex-1 min-w-0">
-                    <span className="text-slate-500 text-xs shrink-0">{isOpen ? '\u25BC' : '\u25B6'}</span>
-                    <span className="text-base font-medium text-white truncate">{r.title}</span>
+                    <span className="text-outline text-xs shrink-0">{isOpen ? '\u25BC' : '\u25B6'}</span>
+                    <span className="truncate text-base font-medium text-on-surface">{r.title}</span>
                   </button>
                   <div className="flex gap-2 shrink-0">
                     <CopyButton value={r.primary} />
@@ -695,7 +695,7 @@ export const QuantumRNG = () => {
                       <div className="space-y-1">
                         {r.primary.split('\n').map((line, i) => (
                           <div key={i} className="flex items-center gap-2">
-                            <code className="flex-1 text-sm font-mono text-slate-200 break-all select-all">{line}</code>
+                            <code className="flex-1 text-sm font-mono text-on-surface break-all select-all">{line}</code>
                             <CopyButton value={line} label="Copy" />
                           </div>
                         ))}
@@ -707,10 +707,10 @@ export const QuantumRNG = () => {
                       <div className="pt-2">
                         {r.meta.map(([k, v]) =>
                           k === 'Commitment' && v.length > 20 ? (
-                            <div key={k} className="flex items-baseline justify-between gap-4 py-2 border-b border-slate-700/25 last:border-0">
-                              <span className="text-sm text-slate-400 shrink-0">{k}</span>
+                            <div key={k} className="flex items-baseline justify-between gap-4 py-2 border-b border-outline-variant/25 last:border-0">
+                              <span className="text-sm text-on-surface-variant shrink-0">{k}</span>
                               <div className="flex items-center gap-2">
-                                <code className="text-sm font-mono text-slate-200">{v.slice(0, 16)}...</code>
+                                <code className="text-sm font-mono text-on-surface">{v.slice(0, 16)}...</code>
                                 <CopyButton value={v} label="Copy" />
                               </div>
                             </div>

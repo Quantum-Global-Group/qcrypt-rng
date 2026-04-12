@@ -15,6 +15,9 @@ import type {
   HardwareDevicesResponse,
   HashResponse,
   HealthResponse,
+  HybridKemDecapsulateResponse,
+  HybridKemEncapsulateResponse,
+  HybridKemKeypairResponse,
   KemDecapsulateResponse,
   KemEncapsulateResponse,
   KemKeypairResponse,
@@ -32,6 +35,7 @@ import type {
   VrfRevealResponse,
   VrfSeedResponse,
   VrfVerifyResponse,
+  BillingUsageResponse,
 } from '@/types';
 
 let cachedBaseUrl: string | null = null;
@@ -388,6 +392,40 @@ export const kemDecapsulate = (
   requestForm('/pqc/kem/decapsulate', { ciphertext, private_key: privateKey, algorithm, encoding });
 
 export const getKemInfo = (): Promise<ApiResponse<Record<string, unknown>>> => requestJson('/pqc/kem/info');
+
+export const generateHybridKemKeypair = (
+  encoding: 'base64' | 'hex' = 'base64',
+): Promise<ApiResponse<HybridKemKeypairResponse>> =>
+  requestForm('/pqc/hybrid/kem/generate', { encoding });
+
+export const encapsulateHybridKem = (payload: {
+  kyber_public_key: string;
+  x25519_public_key: string;
+  encoding?: 'base64' | 'hex';
+}): Promise<ApiResponse<HybridKemEncapsulateResponse>> =>
+  requestForm('/pqc/hybrid/kem/encapsulate', {
+    ...payload,
+    encoding: payload.encoding ?? 'base64',
+  });
+
+export const decapsulateHybridKem = (payload: {
+  kyber_private_key: string;
+  x25519_private_key: string;
+  kyber_ciphertext: string;
+  x25519_ciphertext: string;
+  encoding?: 'base64' | 'hex';
+}): Promise<ApiResponse<HybridKemDecapsulateResponse>> =>
+  requestForm('/pqc/hybrid/kem/decapsulate', {
+    ...payload,
+    encoding: payload.encoding ?? 'base64',
+  });
+
+export const getBillingUsage = (apiKey: string): Promise<BillingUsageResponse> =>
+  requestJson('/billing/usage', {
+    headers: {
+      'X-API-Key': apiKey,
+    },
+  });
 
 // Oracle fulfillment API
 export interface ConfigureFulfillmentChainParams {

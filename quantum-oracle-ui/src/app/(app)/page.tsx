@@ -1,5 +1,5 @@
-import { OracleDashboard } from '@/components/dashboard/OracleDashboard';
+import { redirect } from 'next/navigation';
 
 export default function HomePage() {
-  return <OracleDashboard />;
+  redirect('/dashboard');
 }

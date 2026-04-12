@@ -16,11 +16,11 @@ const nav = [
 export default function DocsPage() {
   return (
     <div className="min-h-full bg-surface text-on-surface">
-      <header className="sticky top-0 z-30 flex h-14 w-full items-center justify-between border-b border-outline-variant/10 bg-background/95 px-6 backdrop-blur">
+      <header className="sticky top-12 z-30 -mx-5 flex h-14 w-full items-center justify-between border-b border-outline-variant/10 bg-background/95 px-5 backdrop-blur sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8 xl:-mx-10 xl:px-10">
         <div className="flex items-center gap-8">
           <span className="font-mono text-sm font-bold tracking-tighter text-on-surface">QUANTUM_ORACLE_V1</span>
           <nav className="hidden items-center gap-6 md:flex">
-            <Link href="/" className="px-2 py-1 text-sm text-outline transition-colors hover:bg-surface-container hover:text-on-surface">
+            <Link href="/dashboard" className="px-2 py-1 text-sm text-outline transition-colors hover:bg-surface-container hover:text-on-surface">
               Oracle
             </Link>
             <Link href="/pqc" className="px-2 py-1 text-sm text-outline transition-colors hover:bg-surface-container hover:text-on-surface">
@@ -40,7 +40,7 @@ export default function DocsPage() {
       </header>
 
       <div className="flex">
-        <aside className="docs-scrollbar sticky top-14 hidden h-[calc(100vh-3.5rem)] w-64 shrink-0 flex-col overflow-y-auto border-r border-outline-variant/10 bg-surface-container-low md:flex">
+        <aside className="docs-scrollbar sticky top-[6.5rem] hidden h-[calc(100vh-6.5rem)] w-64 shrink-0 flex-col overflow-y-auto border-r border-outline-variant/10 bg-surface-container-low md:flex">
           <div className="flex flex-col gap-1 p-6">
             <div className="flex items-center gap-3">
               <div className="h-2 w-2 rounded-full bg-secondary shadow-[0_0_8px_rgba(78,222,163,0.35)]" />
@@ -88,7 +88,7 @@ export default function DocsPage() {
           </div>
         </aside>
 
-        <div className="mx-auto flex min-w-0 max-w-6xl flex-1 flex-col lg:flex-row">
+        <div className="flex min-w-0 flex-1 flex-col lg:flex-row">
           <div className="flex-1 border-r border-outline-variant/10 p-8 lg:p-12">
             <header className="mb-12">
               <div className="mb-4 flex flex-wrap gap-2">
