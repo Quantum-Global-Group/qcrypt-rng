@@ -4,9 +4,7 @@
 
 import { useState, useCallback } from 'react';
 import {
-  ResearchHeader, Panel, PanelHeader, PanelBody,
-  MonoOut, Field, RunButton, GhostButton, Chip,
-  MetaRow, SectionDivider, StatBlock,
+  RunButton, GhostButton, Chip,
 } from '@/components/research/shared';
 import { useExperimentLog } from '@/hooks/useExperimentLog';
 import {
@@ -14,6 +12,7 @@ import {
   encapsulateHybridKem,
   generateHybridKemKeypair,
 } from '@/utils/api';
+import { cn } from '@/lib/utils';
 
 interface HybridKeypair {
   dilithium_pk: string;
@@ -74,10 +73,14 @@ function randB64(n: number): string {
   return btoa(String.fromCharCode(...bytes));
 }
 
+type TabId = 'sign' | 'kem' | 'csr';
+
 // ── Component ─────────────────────────────────────────────────────────────────
 
 export default function HybridPQCPage() {
   const { add } = useExperimentLog();
+  const [activeTab, setActiveTab] = useState<TabId>('sign');
+
   const [keypair, setKeypair]       = useState<HybridKeypair | null>(null);
   const [message, setMessage]       = useState('The quick brown fox jumps over the lazy dog.');
   const [sig, setSig]               = useState<HybridSig | null>(null);
@@ -344,225 +347,309 @@ export default function HybridPQCPage() {
     setLoadingKemDecap(false);
   }, [kemKeypair, kemResult, add]);
 
-  return (
-    <div className="page-enter min-w-0">
-      <ResearchHeader
-        eyebrow="PQC · Hybrid"
-        title="Hybrid PQC — Dilithium3 + Ed25519"
-        description="Combined signing with both FIPS 204 (ML-DSA) and Ed25519. Classical CAs verify with Ed25519 today; PQC-aware systems verify with Dilithium3. Also generates migration-ready TLS CSRs."
-      />
+  const tabs: { id: TabId; label: string }[] = [
+    { id: 'sign', label: 'Hybrid Sign' },
+    { id: 'kem',  label: 'Hybrid KEM' },
+    { id: 'csr',  label: 'TLS CSR' },
+  ];
 
-      <div className="grid grid-cols-2 gap-4 items-start">
-        {/* Left — keygen + signing */}
-        <div className="flex flex-col gap-3">
-          <Panel>
-            <PanelHeader title="Step 1 — Key generation" />
-            <PanelBody>
-              <div className="text-[11px] text-on-surface-variant mb-3 leading-relaxed">
-                Generates both a Dilithium3 keypair and an Ed25519 keypair. The public keys are linked — one identity, two cryptographic guarantees.
-              </div>
-              <RunButton onClick={generateKeypair} loading={loadingKey}>
-                Generate Hybrid Keypair
-              </RunButton>
-            </PanelBody>
-          </Panel>
+  return (
+    <div className="page-enter min-w-0 space-y-6">
+      {/* Tab navigation */}
+      <div className="flex gap-1 rounded-md border border-outline-variant/20 bg-surface-container-lowest/50 p-1 w-fit">
+        {tabs.map((tab) => (
+          <button
+            key={tab.id}
+            type="button"
+            onClick={() => setActiveTab(tab.id)}
+            className={cn(
+              'flex-1 rounded py-1.5 font-mono text-[11px] font-medium px-4 transition-colors',
+              activeTab === tab.id
+                ? 'bg-primary/15 text-primary'
+                : 'text-on-surface-variant hover:text-on-surface',
+            )}
+          >
+            {tab.label}
+          </button>
+        ))}
+      </div>
+
+      {/* Tab 1 — Hybrid Sign */}
+      {activeTab === 'sign' && (
+        <div className="space-y-4">
+          <div className="rounded-xl border border-outline-variant/20 bg-surface-container-low/70 p-6 space-y-5">
+            <p className="font-mono text-[10px] font-semibold uppercase tracking-[0.12em] text-outline">
+              Step 1 — Key generation
+            </p>
+            <p className="text-[11px] text-on-surface-variant leading-relaxed">
+              Generates both a Dilithium3 keypair and an Ed25519 keypair. The public keys are linked — one identity, two cryptographic guarantees.
+            </p>
+            <RunButton onClick={generateKeypair} loading={loadingKey}>
+              Generate Hybrid Keypair
+            </RunButton>
+          </div>
 
           {keypair && (
-            <Panel>
-              <PanelHeader title="Public keys" right={<Chip variant="verified">FIPS 204 + RFC 8037</Chip>} />
-              <PanelBody>
-                <Field label="Dilithium3 public key">
-                  <MonoOut value={keypair.dilithium_pk.slice(0, 60) + '…'} minHeight="36px" copyable />
-                </Field>
-                <Field label="Ed25519 public key">
-                  <MonoOut value={keypair.ed25519_pk} minHeight="32px" highlight="secondary" copyable />
-                </Field>
-                <SectionDivider />
-                <MetaRow label="Dilithium3 pk size" value="1,952 bytes (NIST Level 3)" />
-                <MetaRow label="Ed25519 pk size"    value="32 bytes (RFC 8037)" />
-              </PanelBody>
-            </Panel>
+            <div className="rounded-xl border border-outline-variant/15 bg-surface-container-lowest/40 p-6 space-y-3">
+              <div className="flex items-center justify-between">
+                <p className="font-mono text-[9px] uppercase tracking-widest text-outline">Public keys</p>
+                <span className="chip chip-verified">FIPS 204 + RFC 8037</span>
+              </div>
+              <div className="flex items-start justify-between gap-4 py-1">
+                <span className="font-mono text-[9px] uppercase tracking-widest text-outline shrink-0">Dilithium3 pk</span>
+                <span className="text-right font-mono text-[11px] text-on-surface-variant break-all">
+                  {keypair.dilithium_pk.slice(0, 60)}…
+                </span>
+              </div>
+              <div className="flex items-start justify-between gap-4 py-1">
+                <span className="font-mono text-[9px] uppercase tracking-widest text-outline shrink-0">Ed25519 pk</span>
+                <span className="text-right font-mono text-[11px] text-on-surface-variant break-all">
+                  {keypair.ed25519_pk}
+                </span>
+              </div>
+            </div>
           )}
 
-          <Panel>
-            <PanelHeader title="Step 2 — Hybrid sign" />
-            <PanelBody>
-              <Field label="Message">
-                <textarea
-                  value={message}
-                  onChange={e => setMessage(e.target.value)}
-                  style={{ height: 64, resize: 'vertical' }}
-                />
-              </Field>
-              <div className="flex gap-2">
-                <RunButton onClick={sign} loading={loadingSig} disabled={!keypair}>
-                  Sign with Both
-                </RunButton>
-                <GhostButton onClick={verify} disabled={!sig}>
-                  Verify
-                </GhostButton>
-              </div>
-            </PanelBody>
-          </Panel>
+          <div className="rounded-xl border border-outline-variant/20 bg-surface-container-low/70 p-6 space-y-5">
+            <p className="font-mono text-[10px] font-semibold uppercase tracking-[0.12em] text-outline">
+              Step 2 — Hybrid sign
+            </p>
+            <div>
+              <label className="block font-mono text-[10px] font-semibold uppercase tracking-[0.1em] text-outline mb-2">
+                Message
+              </label>
+              <textarea
+                value={message}
+                onChange={(e) => setMessage(e.target.value)}
+                className="field w-full"
+                style={{ height: 64, resize: 'vertical' }}
+              />
+            </div>
+            <div className="flex gap-2">
+              <RunButton onClick={sign} loading={loadingSig} disabled={!keypair}>
+                Sign with Both
+              </RunButton>
+              <GhostButton onClick={verify} disabled={!sig}>
+                Verify
+              </GhostButton>
+            </div>
+          </div>
 
-          <Panel>
-            <PanelHeader title="Hybrid KEM — Kyber768 + X25519" />
-            <PanelBody>
-              <div className="text-[11px] text-on-surface-variant mb-3 leading-relaxed">
-                Sender-side hybrid key exchange for migration testing. The combined secret is derived from both a Kyber768 encapsulation and an X25519 exchange.
+          {sig && (
+            <div className="rounded-xl border border-outline-variant/15 bg-surface-container-lowest/40 p-6 space-y-3">
+              <p className="font-mono text-[9px] uppercase tracking-widest text-outline">Signature outputs</p>
+              <div className="flex items-start justify-between gap-4 py-1">
+                <span className="font-mono text-[9px] uppercase tracking-widest text-outline shrink-0">Combined sig</span>
+                <span className="text-right font-mono text-[11px] text-on-surface-variant break-all">
+                  {sig.combined.slice(0, 60)}…
+                </span>
               </div>
-              <div className="flex gap-2">
-                <RunButton onClick={generateKemKeypair} loading={loadingKemKey}>
-                  Generate Hybrid KEM Keys
-                </RunButton>
-                <GhostButton onClick={encapsulateKem} disabled={!kemKeypair || loadingKemEncap}>
-                  {loadingKemEncap ? 'Encapsulating…' : 'Encapsulate'}
-                </GhostButton>
-                <GhostButton onClick={decapsulateKem} disabled={!kemResult || loadingKemDecap}>
-                  {loadingKemDecap ? 'Decapsulating…' : 'Decapsulate'}
-                </GhostButton>
+              <div className="flex items-start justify-between gap-4 py-1">
+                <span className="font-mono text-[9px] uppercase tracking-widest text-outline shrink-0">Dilithium size</span>
+                <span className="text-right font-mono text-[11px] text-on-surface-variant">{sig.dilithiumBytes.toLocaleString()} B</span>
               </div>
-              {kemKeypair && (
+              <div className="flex items-start justify-between gap-4 py-1">
+                <span className="font-mono text-[9px] uppercase tracking-widest text-outline shrink-0">Ed25519 size</span>
+                <span className="text-right font-mono text-[11px] text-on-surface-variant">{sig.ed25519Bytes.toLocaleString()} B</span>
+              </div>
+              {verifyResult && (
                 <>
-                  <SectionDivider />
-                  <Field label="Kyber public key">
-                    <MonoOut value={kemKeypair.kyber_public_key.slice(0, 60) + '…'} minHeight="36px" copyable />
-                  </Field>
-                  <Field label="X25519 public key">
-                    <MonoOut value={kemKeypair.x25519_public_key} minHeight="32px" highlight="secondary" copyable />
-                  </Field>
-                  <MetaRow label="Kyber profile" value="Kyber768 (PQ KEM)" mono={false} />
-                  <MetaRow label="Classical profile" value="X25519 (ECDH)" mono={false} />
+                  <div className="border-t border-outline-variant/15 pt-3 space-y-2">
+                    <div className="flex items-start justify-between gap-4 py-1">
+                      <span className="font-mono text-[9px] uppercase tracking-widest text-outline shrink-0">Dilithium3</span>
+                      <span className={verifyResult.dilithium_valid ? 'chip chip-verified' : 'chip chip-degraded'}>
+                        {verifyResult.dilithium_valid ? 'Valid' : 'Invalid'}
+                      </span>
+                    </div>
+                    <div className="flex items-start justify-between gap-4 py-1">
+                      <span className="font-mono text-[9px] uppercase tracking-widest text-outline shrink-0">Ed25519</span>
+                      <span className={verifyResult.ed25519_valid ? 'chip chip-verified' : 'chip chip-degraded'}>
+                        {verifyResult.ed25519_valid ? 'Valid' : 'Invalid'}
+                      </span>
+                    </div>
+                    <div className="flex items-start justify-between gap-4 py-1">
+                      <span className="font-mono text-[9px] uppercase tracking-widest text-outline shrink-0">Hybrid</span>
+                      <span className={verifyResult.hybrid_valid ? 'chip chip-verified' : 'chip chip-degraded'}>
+                        {verifyResult.hybrid_valid ? 'Verified' : 'Failed'}
+                      </span>
+                    </div>
+                  </div>
                 </>
               )}
-            </PanelBody>
-          </Panel>
+            </div>
+          )}
         </div>
+      )}
 
-        {/* Right — outputs + CSR */}
-        <div className="flex flex-col gap-3">
-          {sig && (
-            <Panel>
-              <PanelHeader title="Signature outputs" />
-              <PanelBody>
-                <Field label="Combined signature (serialised)">
-                  <MonoOut value={sig.combined.slice(0, 60) + '…'} minHeight="32px" copyable />
-                </Field>
-                <div className="grid grid-cols-2 gap-3 mt-1">
-                  <StatBlock label="Dilithium3 sig" value={sig.dilithiumBytes.toLocaleString()} unit="B" />
-                  <StatBlock label="Ed25519 sig"    value={sig.ed25519Bytes.toLocaleString()}   unit="B" />
-                </div>
-                <SectionDivider />
-                {verifyResult ? (
-                  <div className="space-y-2">
-                    <MetaRow
-                      label="Dilithium3 valid"
-                      value={<Chip variant={verifyResult.dilithium_valid ? 'verified' : 'degraded'}>{verifyResult.dilithium_valid ? 'VALID' : 'INVALID'}</Chip>}
-                      mono={false}
-                    />
-                    <MetaRow
-                      label="Ed25519 valid"
-                      value={<Chip variant={verifyResult.ed25519_valid ? 'verified' : 'degraded'}>{verifyResult.ed25519_valid ? 'VALID' : 'INVALID'}</Chip>}
-                      mono={false}
-                    />
-                    <MetaRow
-                      label="Hybrid result"
-                      value={<Chip variant={verifyResult.hybrid_valid ? 'verified' : 'degraded'}>{verifyResult.hybrid_valid ? 'VERIFIED ✓' : 'FAILED ✗'}</Chip>}
-                      mono={false}
-                    />
-                  </div>
-                ) : (
-                  <p className="font-mono text-[9px] text-outline/60">click Verify to check both signatures</p>
-                )}
-              </PanelBody>
-            </Panel>
+      {/* Tab 2 — Hybrid KEM */}
+      {activeTab === 'kem' && (
+        <div className="space-y-4">
+          <div className="rounded-xl border border-outline-variant/20 bg-surface-container-low/70 p-6 space-y-5">
+            <p className="font-mono text-[10px] font-semibold uppercase tracking-[0.12em] text-outline">
+              Hybrid KEM — Kyber768 + X25519
+            </p>
+            <p className="text-[11px] text-on-surface-variant leading-relaxed">
+              Sender-side hybrid key exchange for migration testing. The combined secret is derived from both a Kyber768 encapsulation and an X25519 exchange.
+            </p>
+            <RunButton onClick={generateKemKeypair} loading={loadingKemKey}>
+              Generate Hybrid KEM Keys
+            </RunButton>
+          </div>
+
+          {kemKeypair && (
+            <div className="rounded-xl border border-outline-variant/15 bg-surface-container-lowest/40 p-6 space-y-3">
+              <p className="font-mono text-[9px] uppercase tracking-widest text-outline">KEM public keys</p>
+              <div className="flex items-start justify-between gap-4 py-1">
+                <span className="font-mono text-[9px] uppercase tracking-widest text-outline shrink-0">Kyber768 pk</span>
+                <span className="text-right font-mono text-[11px] text-on-surface-variant break-all">
+                  {kemKeypair.kyber_public_key.slice(0, 60)}…
+                </span>
+              </div>
+              <div className="flex items-start justify-between gap-4 py-1">
+                <span className="font-mono text-[9px] uppercase tracking-widest text-outline shrink-0">X25519 pk</span>
+                <span className="text-right font-mono text-[11px] text-on-surface-variant break-all">
+                  {kemKeypair.x25519_public_key}
+                </span>
+              </div>
+            </div>
           )}
 
-          <Panel>
-            <PanelHeader title="Step 3 — CSR for TLS migration" />
-            <PanelBody>
-              <div className="text-[11px] text-on-surface-variant mb-3 leading-relaxed">
-                Generates a PKCS#10 CSR. Ed25519 signs it (classical CA compatible). Dilithium3 public key embedded as FIPS 204 extension (OID 2.16.840.1.101.3.4.3.17).
-              </div>
-              <div className="grid grid-cols-2 gap-3">
-                <Field label="Common name (CN)">
-                  <input type="text" value={csrCN} onChange={e => setCsrCN(e.target.value)} />
-                </Field>
-                <Field label="Organization (O)">
-                  <input type="text" value={csrOrg} onChange={e => setCsrOrg(e.target.value)} placeholder="optional" />
-                </Field>
-              </div>
-              <RunButton onClick={generateCSR} loading={loadingCsr} disabled={!keypair}>
-                Generate CSR
-              </RunButton>
-            </PanelBody>
-          </Panel>
-
-          {csrPem && (
-            <Panel>
-              <PanelHeader
-                title="CSR (PEM)"
-                right={
-                  <GhostButton onClick={() => navigator.clipboard?.writeText(csrPem)}>
-                    Copy PEM
-                  </GhostButton>
-                }
-              />
-              <PanelBody>
-                <MonoOut value={csrPem} minHeight="80px" highlight="secondary" />
-                <div className="mt-2 font-mono text-[9px] text-outline leading-relaxed">
-                  Submit to any PKCS#10-compatible CA (Let&apos;s Encrypt, DigiCert, Sectigo…).
-                  Once CAs support FIPS 204, the Dilithium3 extension is promoted to primary.
-                </div>
-              </PanelBody>
-            </Panel>
-          )}
+          <div className="rounded-xl border border-outline-variant/20 bg-surface-container-low/70 p-6 space-y-5">
+            <p className="font-mono text-[10px] font-semibold uppercase tracking-[0.12em] text-outline">
+              Key exchange
+            </p>
+            <div className="flex gap-2 flex-wrap">
+              <GhostButton onClick={encapsulateKem} disabled={!kemKeypair || loadingKemEncap}>
+                {loadingKemEncap ? 'Encapsulating…' : 'Encapsulate'}
+              </GhostButton>
+              <GhostButton onClick={decapsulateKem} disabled={!kemResult || loadingKemDecap}>
+                {loadingKemDecap ? 'Decapsulating…' : 'Decapsulate'}
+              </GhostButton>
+            </div>
+          </div>
 
           {kemResult && (
-            <Panel>
-              <PanelHeader title="Hybrid KEM output" right={<Chip variant="info">{kemResult.algorithm}</Chip>} />
-              <PanelBody>
-                <Field label="Sender combined secret">
-                  <MonoOut value={kemResult.combined_secret} minHeight="42px" highlight="primary" copyable />
-                </Field>
-                <Field label="Kyber ciphertext">
-                  <MonoOut value={kemResult.kyber_ciphertext.slice(0, 60) + '…'} minHeight="36px" copyable />
-                </Field>
-                <Field label="X25519 transport share">
-                  <MonoOut value={kemResult.x25519_ciphertext} minHeight="32px" highlight="secondary" copyable />
-                </Field>
-                {kemDecapResult && (
-                  <>
-                    <SectionDivider />
-                    <Field label="Receiver reconstructed secret">
-                      <MonoOut value={kemDecapResult.combined_secret} minHeight="42px" highlight="secondary" copyable />
-                    </Field>
-                    <MetaRow
-                      label="Secret match"
-                      value={
-                        <Chip variant={kemDecapResult.combined_secret === kemResult.combined_secret ? 'verified' : 'degraded'}>
-                          {kemDecapResult.combined_secret === kemResult.combined_secret ? 'MATCH' : 'MISMATCH'}
-                        </Chip>
-                      }
-                      mono={false}
-                    />
-                  </>
-                )}
-                {kemResult.key_sizes && (
-                  <>
-                    <SectionDivider />
-                    <div className="grid grid-cols-3 gap-3">
-                      <StatBlock label="Kyber CT" value={kemResult.key_sizes.kyber_ciphertext_bytes.toLocaleString()} unit="B" />
-                      <StatBlock label="X25519 Share" value={kemResult.key_sizes.x25519_ciphertext_bytes.toLocaleString()} unit="B" />
-                      <StatBlock label="Combined Secret" value={kemResult.key_sizes.combined_secret_bytes.toLocaleString()} unit="B" />
+            <div className="rounded-xl border border-outline-variant/15 bg-surface-container-lowest/40 p-6 space-y-3">
+              <div className="flex items-center justify-between">
+                <p className="font-mono text-[9px] uppercase tracking-widest text-outline">Encapsulation result</p>
+                <span className="font-mono text-[9px] text-outline/70">{kemResult.algorithm}</span>
+              </div>
+              <div className="flex items-start justify-between gap-4 py-1">
+                <span className="font-mono text-[9px] uppercase tracking-widest text-outline shrink-0">Combined secret</span>
+                <span className="text-right font-mono text-[11px] text-on-surface-variant break-all">
+                  {kemResult.combined_secret}
+                </span>
+              </div>
+              <div className="flex items-start justify-between gap-4 py-1">
+                <span className="font-mono text-[9px] uppercase tracking-widest text-outline shrink-0">Kyber CT</span>
+                <span className="text-right font-mono text-[11px] text-on-surface-variant break-all">
+                  {kemResult.kyber_ciphertext.slice(0, 48)}…
+                </span>
+              </div>
+              <div className="flex items-start justify-between gap-4 py-1">
+                <span className="font-mono text-[9px] uppercase tracking-widest text-outline shrink-0">X25519 CT</span>
+                <span className="text-right font-mono text-[11px] text-on-surface-variant break-all">
+                  {kemResult.x25519_ciphertext}
+                </span>
+              </div>
+              {kemDecapResult && (
+                <>
+                  <div className="border-t border-outline-variant/15 pt-3 space-y-2">
+                    <div className="flex items-start justify-between gap-4 py-1">
+                      <span className="font-mono text-[9px] uppercase tracking-widest text-outline shrink-0">Receiver secret</span>
+                      <span className="text-right font-mono text-[11px] text-on-surface-variant break-all">
+                        {kemDecapResult.combined_secret}
+                      </span>
                     </div>
-                  </>
-                )}
-              </PanelBody>
-            </Panel>
+                    <div className="flex items-start justify-between gap-4 py-1">
+                      <span className="font-mono text-[9px] uppercase tracking-widest text-outline shrink-0">Match</span>
+                      <span>
+                        {kemDecapResult.combined_secret === kemResult.combined_secret ? (
+                          <span className="chip chip-verified">Match</span>
+                        ) : (
+                          <span className="chip chip-degraded">Mismatch</span>
+                        )}
+                      </span>
+                    </div>
+                  </div>
+                </>
+              )}
+            </div>
           )}
         </div>
-      </div>
+      )}
+
+      {/* Tab 3 — TLS CSR */}
+      {activeTab === 'csr' && (
+        <div className="space-y-4">
+          {!keypair && (
+            <div className="flex h-28 items-center justify-center rounded-lg border border-dashed border-outline-variant/25">
+              <span className="font-mono text-[11px] text-outline/50">
+                Requires keypair from Hybrid Sign tab
+              </span>
+            </div>
+          )}
+
+          <div className="rounded-xl border border-outline-variant/20 bg-surface-container-low/70 p-6 space-y-5">
+            <p className="font-mono text-[10px] font-semibold uppercase tracking-[0.12em] text-outline">
+              Step 3 — TLS CSR
+            </p>
+            <p className="text-[11px] text-on-surface-variant leading-relaxed">
+              Generates a PKCS#10 CSR. Ed25519 signs it (classical CA compatible). Dilithium3 public key embedded as FIPS 204 extension.
+            </p>
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <div>
+                <label className="block font-mono text-[10px] font-semibold uppercase tracking-[0.1em] text-outline mb-2">
+                  Common name (CN)
+                </label>
+                <input
+                  type="text"
+                  value={csrCN}
+                  onChange={(e) => setCsrCN(e.target.value)}
+                  className="field w-full"
+                />
+              </div>
+              <div>
+                <label className="block font-mono text-[10px] font-semibold uppercase tracking-[0.1em] text-outline mb-2">
+                  Organization (O)
+                </label>
+                <input
+                  type="text"
+                  value={csrOrg}
+                  onChange={(e) => setCsrOrg(e.target.value)}
+                  placeholder="optional"
+                  className="field w-full"
+                />
+              </div>
+            </div>
+            <RunButton onClick={generateCSR} loading={loadingCsr} disabled={!keypair}>
+              Generate CSR
+            </RunButton>
+          </div>
+
+          {csrPem && (
+            <div className="rounded-xl border border-outline-variant/15 bg-surface-container-lowest/40 p-6 space-y-4">
+              <div className="flex items-center justify-between">
+                <p className="font-mono text-[9px] uppercase tracking-widest text-outline">CSR (PEM)</p>
+                <button
+                  type="button"
+                  onClick={() => navigator.clipboard?.writeText(csrPem)}
+                  className="btn-secondary text-[11px] px-3 py-1"
+                >
+                  Copy PEM
+                </button>
+              </div>
+              <pre className="max-h-64 overflow-auto rounded-lg border border-outline-variant/15 bg-surface-container-lowest p-4 font-mono text-[11px] leading-relaxed text-on-surface-variant whitespace-pre-wrap break-all">
+                {csrPem}
+              </pre>
+              <p className="font-mono text-[9px] text-outline leading-relaxed">
+                Submit to any PKCS#10-compatible CA (Let&apos;s Encrypt, DigiCert, Sectigo…).
+                Once CAs support FIPS 204, the Dilithium3 extension is promoted to primary.
+              </p>
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }

@@ -21,6 +21,7 @@ from app.api.v2.endpoints import hardware
 from app.api.v2.endpoints import oracle
 from app.api.v2.endpoints import vrf
 from app.api.v2.endpoints import pqc_upgrades
+from app.api.v2.endpoints import ibm_runtime
 from app.billing import stripe_webhooks
 from app.api.v2.models.responses import ErrorResponse
 
@@ -298,6 +299,13 @@ app.include_router(
     vrf.router,
     prefix=f"{settings.api_prefix}/oracle",
     tags=["Quantum VRF"]
+)
+
+# IBM Quantum Runtime (IBM Cloud API key + instance CRN)
+app.include_router(
+    ibm_runtime.router,
+    prefix=f"{settings.api_prefix}/ibm-runtime",
+    tags=["IBM Quantum Runtime"],
 )
 
 # Health check

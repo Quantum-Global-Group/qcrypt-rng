@@ -34,14 +34,14 @@ export function ResearchHeader({
   description,
   className,
 }: {
-  eyebrow: string;
+  eyebrow?: string;
   title: string;
   description?: string;
   className?: string;
 }) {
   return (
     <div className={cn('mb-8 w-full min-w-0 md:mb-10', className)}>
-      <p className="font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-outline mb-2">{eyebrow}</p>
+      {eyebrow && <p className="font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-outline mb-2">{eyebrow}</p>}
       <h1 className="text-2xl md:text-[1.75rem] font-light text-on-surface tracking-tight mb-2">{title}</h1>
       {description && (
         <p className="text-[15px] text-on-surface-variant max-w-3xl leading-relaxed">{description}</p>

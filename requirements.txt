@@ -8,6 +8,9 @@ pydantic-settings==2.1.0
 qrisp==0.4.0
 numpy>=1.26.0  # Changed: Python 3.12 compatible
 scipy>=1.11.4
+# Optional: IBM Quantum on IBM Cloud (API key + instance CRN) — used by /api/v2/ibm-runtime/*
+qiskit>=1.2.0
+qiskit-ibm-runtime>=0.31.0
 
 # Cryptography
 cryptography==41.0.7

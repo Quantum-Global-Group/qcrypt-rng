@@ -4,7 +4,6 @@
 
 import { useState, useCallback } from 'react';
 import {
-  ResearchHeader,
   Panel,
   PanelHeader,
   PanelBody,
@@ -101,11 +100,7 @@ export default function BenchmarksPage() {
 
   return (
     <div className="page-enter min-w-0">
-      <ResearchHeader
-        eyebrow="PQC · Performance"
-        title="Algorithm Benchmarks"
-        description="Comparative performance across all NIST-standardized PQC families. API round-trip included. Install liboqs for hardware-accurate measurements."
-      />
+      <h1 className="mb-6 font-headline text-2xl font-semibold tracking-tight text-on-surface">Algorithm Benchmarks</h1>
 
       <Panel>
         <PanelHeader

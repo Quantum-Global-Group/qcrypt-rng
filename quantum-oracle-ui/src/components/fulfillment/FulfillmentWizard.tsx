@@ -116,17 +116,32 @@ export function FulfillmentWizard() {
 
   return (
     <div className="flex min-h-0 min-w-0 flex-1 flex-col bg-surface text-on-surface">
-      <header className="sticky top-0 z-10 -mx-5 flex h-14 shrink-0 items-center justify-between gap-4 border-b border-outline-variant/10 bg-surface-container-low px-5 sm:-mx-8 sm:px-8 lg:-mx-10 lg:px-10 xl:-mx-12 xl:px-12">
-        <div className="min-w-0">
-          <h1 className="truncate text-base font-semibold tracking-tight text-on-surface">Fulfillment</h1>
-          <p className="font-mono text-[10px] text-outline">On-chain request wizard · same session as the rest of QCrypt</p>
+      <header className="sticky top-12 z-10 -mx-5 flex h-12 shrink-0 items-center justify-between gap-4 border-b border-outline-variant/10 bg-surface-container-low/95 px-5 backdrop-blur-sm sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8 xl:-mx-10 xl:px-10">
+        <div className="flex items-center gap-3">
+          <span className="font-mono text-[11px] font-semibold text-on-surface">On-chain Fulfillment</span>
+          <span className="chip chip-dim">Testnet-ready</span>
+          {/* Step indicator */}
+          <div className="hidden items-center gap-1.5 sm:flex">
+            {[1, 2, 3].map((s) => (
+              <span
+                key={s}
+                className={`flex h-5 w-5 items-center justify-center rounded-full font-mono text-[9px] font-bold ${
+                  step >= s
+                    ? 'bg-primary text-on-primary'
+                    : 'bg-surface-container text-outline'
+                }`}
+              >
+                {s}
+              </span>
+            ))}
+            <span className="font-mono text-[10px] text-on-surface-variant">
+              {step === 1 ? 'Configure chain' : step === 2 ? 'Execute request' : 'Monitor status'}
+            </span>
+          </div>
         </div>
-        <div className="flex shrink-0 items-center gap-3">
-          <span className="hidden font-mono text-[10px] text-outline sm:inline">Testnet-ready</span>
-          <Link href="/docs/api" className="text-sm font-medium text-primary hover:underline">
-            API docs
-          </Link>
-        </div>
+        <Link href="/docs/api" className="font-mono text-[11px] text-primary transition-colors hover:text-primary/80">
+          API docs →
+        </Link>
       </header>
 
       <div className="flex min-h-0 flex-1 flex-col gap-0 overflow-hidden lg:flex-row">

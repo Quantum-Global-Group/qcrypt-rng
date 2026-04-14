@@ -141,8 +141,30 @@ export const runOracleBenchmark = (): Promise<ApiResponse<OracleBenchmarkRespons
 export const createBlockchainWallet = (walletType: 'both' | 'vulnerable' | 'quantum-safe'): Promise<ApiResponse<Record<string, unknown>>> =>
   requestForm('/blockchain/create-wallet', { wallet_type: walletType });
 
+/** Shor attack simulation targets (matches `/blockchain/simulate-attack` Form `target`). */
+export type ShorSimTarget =
+  | 'RSA-2048'
+  | 'RSA-4096'
+  | 'ECDSA-256'
+  | 'ECDSA-384'
+  | 'DILITHIUM3'
+  | 'KYBER768';
+
+export const signBlockchainTransaction = (payload: {
+  from_address: string;
+  to_address: string;
+  amount: number;
+  signature_type: 'vulnerable' | 'quantum-safe' | 'both';
+}): Promise<ApiResponse<Record<string, unknown>>> =>
+  requestForm('/blockchain/sign-transaction', {
+    from_address: payload.from_address,
+    to_address: payload.to_address,
+    amount: payload.amount,
+    signature_type: payload.signature_type,
+  });
+
 export const simulateBlockchainAttack = (
-  target: 'RSA-2048' | 'ECDSA-256' | 'DILITHIUM3' | 'KYBER768',
+  target: ShorSimTarget,
   showTimeline = true,
 ): Promise<ApiResponse<Record<string, unknown>>> =>
   requestForm('/blockchain/simulate-attack', { target, show_timeline: showTimeline });

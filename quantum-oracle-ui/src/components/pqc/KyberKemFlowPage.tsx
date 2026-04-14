@@ -2,16 +2,7 @@
 
 import Link from 'next/link';
 import { useState } from 'react';
-import {
-  ArrowLeft,
-  Binary,
-  BookOpen,
-  FlaskConical,
-  KeyRound,
-  Link2,
-  Lock,
-  Unlock,
-} from 'lucide-react';
+import { Binary, FlaskConical, KeyRound } from 'lucide-react';
 import { kemDecapsulate, kemEncapsulate, kemGenerate } from '@/utils/api';
 import type { KemDecapsulateResponse, KemEncapsulateResponse, KemKeypairResponse } from '@/types';
 import { cn } from '@/lib/utils';
@@ -83,44 +74,11 @@ export function KyberKemFlowPage({ researchLayout = false }: { researchLayout?: 
 
   const match = encap && decap ? encap.shared_secret === decap.shared_secret : null;
 
-  const preClass =
-    'max-h-52 overflow-auto rounded-lg border border-outline-variant/15 bg-surface-container-lowest p-4 font-mono text-[11px] leading-relaxed text-on-surface-variant';
-
-  const panelClass = cn(
-    'rounded-xl border border-outline-variant/20 bg-surface-container-low/80 shadow-[inset_0_1px_0_rgba(255,255,255,0.03)]',
-    researchLayout ? 'p-6 md:p-8' : 'p-5 md:p-6',
-  );
-
-  const stepperCard = (s: (typeof STEPS)[0]) => (
-    <div
-      key={s.n}
-      className={cn(
-        'flex min-h-[5.5rem] min-w-0 flex-1 items-start gap-4 rounded-xl border px-4 py-4 transition-colors sm:min-w-[160px]',
-        step === s.n
-          ? 'border-primary bg-primary/10 shadow-[0_0_0_1px_rgba(0,212,168,0.2)]'
-          : 'border-outline-variant/25 bg-surface-container-low hover:border-outline-variant/40',
-      )}
-    >
-      <span
-        className={cn(
-          'flex h-10 w-10 shrink-0 items-center justify-center rounded-full font-mono text-sm font-semibold',
-          step >= s.n ? 'bg-primary/20 text-primary' : 'bg-surface-container-high text-outline',
-        )}
-      >
-        {s.n}
-      </span>
-      <div className="min-w-0 pt-0.5">
-        <div className="font-headline text-sm font-semibold tracking-tight text-on-surface">{s.title}</div>
-        <div className="mt-1 font-mono text-[11px] leading-snug text-on-surface-variant">{s.sub}</div>
-      </div>
-    </div>
-  );
-
   return (
     <div
       className={cn(
         'min-h-full text-on-surface',
-        researchLayout ? 'w-full space-y-10 lg:space-y-14' : 'w-full py-8 pb-14',
+        researchLayout ? 'w-full space-y-8' : 'w-full py-8 pb-14',
       )}
     >
       {!researchLayout && (
@@ -166,239 +124,222 @@ export function KyberKemFlowPage({ researchLayout = false }: { researchLayout?: 
         </header>
       )}
 
-      <div
-        className={cn(
-          'flex flex-col gap-3 sm:flex-row sm:flex-wrap lg:gap-4',
-          researchLayout ? 'w-full' : 'mt-10',
-        )}
-      >
-        {STEPS.map((s) => stepperCard(s))}
+      {/* Parameters bar */}
+      <div className="rounded-xl border border-outline-variant/20 bg-surface-container-low/70 p-6">
+        <div className="flex flex-wrap items-end gap-6">
+          <div>
+            <label className="block font-mono text-[10px] font-semibold uppercase tracking-[0.1em] text-outline mb-2">
+              Algorithm
+            </label>
+            <select
+              value={algorithm}
+              onChange={(e) => setAlgorithm(e.target.value as KyberAlg)}
+              className="field"
+            >
+              <option value="KYBER512">KYBER512</option>
+              <option value="KYBER768">KYBER768</option>
+              <option value="KYBER1024">KYBER1024</option>
+            </select>
+          </div>
+          <div>
+            <label className="block font-mono text-[10px] font-semibold uppercase tracking-[0.1em] text-outline mb-2">
+              Encoding
+            </label>
+            <div className="flex gap-1 rounded-md border border-outline-variant/20 bg-surface-container-lowest/50 p-1">
+              {(['base64', 'hex'] as const).map((enc) => (
+                <button
+                  key={enc}
+                  type="button"
+                  onClick={() => setEncoding(enc)}
+                  className={cn(
+                    'flex-1 rounded py-1.5 font-mono text-[11px] font-medium px-3 transition-colors',
+                    encoding === enc
+                      ? 'bg-primary/15 text-primary'
+                      : 'text-on-surface-variant hover:text-on-surface',
+                  )}
+                >
+                  {enc}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
       </div>
 
-      <div
-        className={cn(
-          'grid grid-cols-1 gap-10 lg:grid-cols-12 lg:gap-12',
-          researchLayout ? 'mt-10 xl:items-start' : 'mt-10',
-        )}
-      >
-        <div className={cn('space-y-8', researchLayout ? 'xl:col-span-8' : 'lg:col-span-7')}>
-          <section className={panelClass}>
-            <h2 className="mb-6 font-label text-[10px] font-semibold uppercase tracking-[0.12em] text-outline">
-              Parameters
-            </h2>
-            <div className="flex flex-col gap-8 sm:flex-row sm:flex-wrap sm:items-end">
-              <div className="min-w-[200px] flex-1">
-                <label className="mb-2 block font-label text-[10px] font-semibold uppercase tracking-wide text-outline">
-                  Algorithm
-                </label>
-                <select
-                  value={algorithm}
-                  onChange={(e) => setAlgorithm(e.target.value as KyberAlg)}
-                  className="field w-full max-w-xs rounded-md border-outline-variant/25 bg-surface-container-lowest px-4 py-3 font-mono text-sm"
-                >
-                  <option value="KYBER512">KYBER512</option>
-                  <option value="KYBER768">KYBER768</option>
-                  <option value="KYBER1024">KYBER1024</option>
-                </select>
+      {error && (
+        <div className="rounded-lg border border-error/30 bg-error/10 px-4 py-3 font-mono text-[12px] text-error" role="alert">
+          {error}
+        </div>
+      )}
+
+      {/* 3-column step grid */}
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+        {/* Step 1 — Generate */}
+        <div className="rounded-xl border border-outline-variant/20 bg-surface-container-low/70 p-6 space-y-5">
+          <div className="flex items-center gap-3">
+            <span
+              className={cn(
+                'flex h-8 w-8 shrink-0 items-center justify-center rounded-full font-mono text-sm font-semibold transition-colors',
+                step > 1 ? 'bg-primary/20 text-primary' : step === 1 ? 'bg-primary/20 text-primary' : 'bg-surface-container-high text-outline',
+              )}
+            >
+              1
+            </span>
+            <div>
+              <div className="font-mono text-[10px] font-semibold uppercase tracking-[0.12em] text-outline">
+                {STEPS[0].title}
               </div>
-              <div>
-                <label className="mb-2 block font-label text-[10px] font-semibold uppercase tracking-wide text-outline">
-                  Encoding
-                </label>
-                <div className="inline-flex gap-2 rounded-lg border border-outline-variant/20 bg-surface-container-low p-1">
-                  {(['base64', 'hex'] as const).map((enc) => (
-                    <button
-                      key={enc}
-                      type="button"
-                      onClick={() => setEncoding(enc)}
-                      className={cn(
-                        'rounded-md px-4 py-2 font-mono text-xs uppercase tracking-wider transition-colors',
-                        encoding === enc
-                          ? 'bg-primary-container text-on-primary-container shadow-sm'
-                          : 'text-on-surface-variant hover:bg-surface-container hover:text-on-surface',
-                      )}
-                    >
-                      {enc}
-                    </button>
-                  ))}
-                </div>
+              <div className="font-mono text-[11px] text-on-surface-variant">{STEPS[0].sub}</div>
+            </div>
+          </div>
+
+          <button
+            type="button"
+            disabled={loading}
+            onClick={runGenerate}
+            className="btn-primary w-full"
+          >
+            {loading && step === 1 ? 'Working…' : 'Generate keypair'}
+          </button>
+
+          {keypair ? (
+            <div className="rounded-xl border border-outline-variant/15 bg-surface-container-lowest/40 p-6 space-y-2">
+              <p className="font-mono text-[9px] uppercase tracking-widest text-outline">Result</p>
+              <div className="flex items-start justify-between gap-4 py-1">
+                <span className="font-mono text-[9px] uppercase tracking-widest text-outline">Algorithm</span>
+                <span className="text-right font-mono text-[11px] text-on-surface-variant break-all">{keypair.algorithm}</span>
+              </div>
+              <div className="flex items-start justify-between gap-4 py-1">
+                <span className="font-mono text-[9px] uppercase tracking-widest text-outline">Public key</span>
+                <span className="text-right font-mono text-[11px] text-on-surface-variant break-all">
+                  {keypair.public_key.slice(0, 32)}…
+                </span>
+              </div>
+              <div className="flex items-start justify-between gap-4 py-1">
+                <span className="font-mono text-[9px] uppercase tracking-widest text-outline">Private key</span>
+                <span className="text-right font-mono text-[11px] text-on-surface-variant break-all">
+                  {keypair.private_key.slice(0, 32)}…
+                </span>
               </div>
             </div>
-          </section>
-
-          {error && (
-            <p className="error-banner text-sm" role="alert">
-              {error}
-            </p>
+          ) : (
+            <div className="flex h-28 items-center justify-center rounded-lg border border-dashed border-outline-variant/25">
+              <span className="font-mono text-[11px] text-outline/50">Generate to see keypair</span>
+            </div>
           )}
-
-          <section className={cn(panelClass, 'space-y-5')}>
-            <div className="flex items-center gap-2">
-              <KeyRound className="h-4 w-4 text-primary" strokeWidth={1.75} aria-hidden />
-              <h2 className="font-label text-[10px] font-semibold uppercase tracking-[0.12em] text-on-surface-variant">
-                Step 1 — Generate
-              </h2>
-            </div>
-            <button
-              type="button"
-              disabled={loading}
-              onClick={runGenerate}
-              className="btn-primary inline-flex items-center justify-center gap-2 px-8 py-3 normal-case tracking-normal"
-            >
-              <span className="material-symbols-outlined text-[20px]" aria-hidden>
-                key
-              </span>
-              {loading && step === 1 ? 'Working…' : 'Generate keypair'}
-            </button>
-            {keypair && (
-              <pre className={preClass}>
-                {JSON.stringify(
-                  {
-                    algorithm: keypair.algorithm,
-                    public_key: `${keypair.public_key.slice(0, 48)}…`,
-                    private_key: `${keypair.private_key.slice(0, 48)}…`,
-                  },
-                  null,
-                  2,
-                )}
-              </pre>
-            )}
-          </section>
-
-          <section className={cn(panelClass, 'space-y-5')}>
-            <div className="flex items-center gap-2">
-              <Link2 className="h-4 w-4 text-secondary" strokeWidth={1.75} aria-hidden />
-              <h2 className="font-label text-[10px] font-semibold uppercase tracking-[0.12em] text-on-surface-variant">
-                Step 2 — Encapsulate
-              </h2>
-            </div>
-            <p className="text-[13px] leading-relaxed text-on-surface-variant">
-              Uses the generated public key to produce a ciphertext and shared secret (sender side).
-            </p>
-            <button
-              type="button"
-              disabled={loading || !keypair}
-              onClick={runEncapsulate}
-              className="inline-flex items-center justify-center gap-2 rounded-md bg-secondary-container px-8 py-3 text-sm font-semibold text-on-secondary-container transition-opacity hover:opacity-90 disabled:opacity-40"
-            >
-              <Lock className="h-4 w-4" strokeWidth={1.75} aria-hidden />
-              Encapsulate
-            </button>
-            {encap && (
-              <pre className={preClass}>
-                {JSON.stringify(
-                  {
-                    ciphertext: `${encap.ciphertext.slice(0, 40)}…`,
-                    shared_secret: `${encap.shared_secret.slice(0, 24)}…`,
-                  },
-                  null,
-                  2,
-                )}
-              </pre>
-            )}
-          </section>
-
-          <section className={cn(panelClass, 'space-y-5')}>
-            <div className="flex items-center gap-2">
-              <Unlock className="h-4 w-4 text-on-surface-variant" strokeWidth={1.75} aria-hidden />
-              <h2 className="font-label text-[10px] font-semibold uppercase tracking-[0.12em] text-on-surface-variant">
-                Step 3 — Decapsulate
-              </h2>
-            </div>
-            <p className="text-[13px] leading-relaxed text-on-surface-variant">
-              Recipient uses the private key and ciphertext to recover the shared secret; it should match Step 2.
-            </p>
-            <button
-              type="button"
-              disabled={loading || !keypair || !encap}
-              onClick={runDecapsulate}
-              className="btn-secondary inline-flex items-center justify-center gap-2 px-8 py-3 normal-case tracking-normal"
-            >
-              <Unlock className="h-4 w-4" strokeWidth={1.75} aria-hidden />
-              Decapsulate
-            </button>
-            {decap && (
-              <>
-                <pre className={preClass}>
-                  {JSON.stringify({ shared_secret: `${decap.shared_secret.slice(0, 32)}…` }, null, 2)}
-                </pre>
-                {match !== null && (
-                  <p
-                    className={cn(
-                      'font-mono text-sm',
-                      match ? 'text-primary' : 'text-error',
-                    )}
-                  >
-                    {match ? 'Shared secrets match.' : 'Shared secrets differ — check algorithm/encoding.'}
-                  </p>
-                )}
-              </>
-            )}
-          </section>
         </div>
 
-        <aside className={cn(researchLayout ? 'xl:col-span-4' : 'lg:col-span-5')}>
-          <div className="sticky top-24 space-y-6 rounded-xl border border-outline-variant/20 bg-surface-container-low/70 p-6 shadow-[inset_0_1px_0_rgba(255,255,255,0.03)] md:p-7">
+        {/* Step 2 — Encapsulate */}
+        <div className="rounded-xl border border-outline-variant/20 bg-surface-container-low/70 p-6 space-y-5">
+          <div className="flex items-center gap-3">
+            <span
+              className={cn(
+                'flex h-8 w-8 shrink-0 items-center justify-center rounded-full font-mono text-sm font-semibold transition-colors',
+                step > 2 ? 'bg-primary/20 text-primary' : step === 2 ? 'bg-primary/20 text-primary' : 'bg-surface-container-high text-outline',
+              )}
+            >
+              2
+            </span>
             <div>
-              <h2 className="font-label text-[10px] font-semibold uppercase tracking-[0.12em] text-outline">
-                API endpoints
-              </h2>
-              <ul className="mt-4 space-y-3 font-mono text-[11px] text-on-surface-variant">
-                <li className="break-all">
-                  <span className="text-primary">POST</span>{' '}
-                  <code className="text-on-surface">/api/v2/pqc/kem/generate</code>
-                </li>
-                <li className="break-all">
-                  <span className="text-primary">POST</span>{' '}
-                  <code className="text-on-surface">/api/v2/pqc/kem/encapsulate</code>
-                </li>
-                <li className="break-all">
-                  <span className="text-primary">POST</span>{' '}
-                  <code className="text-on-surface">/api/v2/pqc/kem/decapsulate</code>
-                </li>
-              </ul>
+              <div className="font-mono text-[10px] font-semibold uppercase tracking-[0.12em] text-outline">
+                {STEPS[1].title}
+              </div>
+              <div className="font-mono text-[11px] text-on-surface-variant">{STEPS[1].sub}</div>
             </div>
-
-            <div className="border-t border-outline-variant/15 pt-6">
-              <h2 className="font-label text-[10px] font-semibold uppercase tracking-[0.12em] text-outline">
-                Related tools
-              </h2>
-              <ul className="mt-4 space-y-3 text-[14px] leading-snug text-on-surface-variant">
-                <li>
-                  <Link href="/research/pqc/hybrid" className="font-medium text-primary underline-offset-2 hover:underline">
-                    Hybrid KEM (Kyber + X25519)
-                  </Link>
-                </li>
-                <li>
-                  <Link href="/research/pqc/signatures" className="font-medium text-primary underline-offset-2 hover:underline">
-                    Signature schemes
-                  </Link>
-                </li>
-                <li>
-                  <Link href="/pqc" className="font-medium text-primary underline-offset-2 hover:underline">
-                    PQC workspace
-                  </Link>
-                </li>
-                <li>
-                  <Link href="/docs/api" className="inline-flex items-center gap-1.5 font-medium text-primary underline-offset-2 hover:underline">
-                    <BookOpen className="h-3.5 w-3.5" strokeWidth={1.75} aria-hidden />
-                    API reference
-                  </Link>
-                </li>
-              </ul>
-            </div>
-
-            {!researchLayout && (
-              <Link
-                href="/pqc"
-                className="inline-flex items-center gap-2 border-t border-outline-variant/15 pt-6 text-sm font-medium text-primary transition-colors hover:text-primary/90"
-              >
-                <ArrowLeft className="h-4 w-4" strokeWidth={1.75} aria-hidden />
-                Back to PQC workspace
-              </Link>
-            )}
           </div>
-        </aside>
+
+          <button
+            type="button"
+            disabled={loading || !keypair}
+            onClick={runEncapsulate}
+            className="btn-secondary w-full"
+          >
+            {loading && step === 2 ? 'Working…' : 'Encapsulate'}
+          </button>
+
+          {encap ? (
+            <div className="rounded-xl border border-outline-variant/15 bg-surface-container-lowest/40 p-6 space-y-2">
+              <p className="font-mono text-[9px] uppercase tracking-widest text-outline">Result</p>
+              <div className="flex items-start justify-between gap-4 py-1">
+                <span className="font-mono text-[9px] uppercase tracking-widest text-outline">Ciphertext</span>
+                <span className="text-right font-mono text-[11px] text-on-surface-variant break-all">
+                  {encap.ciphertext.slice(0, 32)}…
+                </span>
+              </div>
+              <div className="flex items-start justify-between gap-4 py-1">
+                <span className="font-mono text-[9px] uppercase tracking-widest text-outline">Shared secret</span>
+                <span className="text-right font-mono text-[11px] text-on-surface-variant break-all">
+                  {encap.shared_secret.slice(0, 24)}…
+                </span>
+              </div>
+            </div>
+          ) : (
+            <div className="flex h-28 items-center justify-center rounded-lg border border-dashed border-outline-variant/25">
+              <span className="font-mono text-[11px] text-outline/50">
+                {keypair ? 'Click Encapsulate' : 'Complete step 1 first'}
+              </span>
+            </div>
+          )}
+        </div>
+
+        {/* Step 3 — Decapsulate */}
+        <div className="rounded-xl border border-outline-variant/20 bg-surface-container-low/70 p-6 space-y-5">
+          <div className="flex items-center gap-3">
+            <span
+              className={cn(
+                'flex h-8 w-8 shrink-0 items-center justify-center rounded-full font-mono text-sm font-semibold transition-colors',
+                decap ? 'bg-primary/20 text-primary' : step === 3 ? 'bg-primary/20 text-primary' : 'bg-surface-container-high text-outline',
+              )}
+            >
+              3
+            </span>
+            <div>
+              <div className="font-mono text-[10px] font-semibold uppercase tracking-[0.12em] text-outline">
+                {STEPS[2].title}
+              </div>
+              <div className="font-mono text-[11px] text-on-surface-variant">{STEPS[2].sub}</div>
+            </div>
+          </div>
+
+          <button
+            type="button"
+            disabled={loading || !keypair || !encap}
+            onClick={runDecapsulate}
+            className="btn-secondary w-full"
+          >
+            {loading && step === 3 ? 'Working…' : 'Decapsulate'}
+          </button>
+
+          {decap ? (
+            <div className="rounded-xl border border-outline-variant/15 bg-surface-container-lowest/40 p-6 space-y-2">
+              <p className="font-mono text-[9px] uppercase tracking-widest text-outline">Result</p>
+              <div className="flex items-start justify-between gap-4 py-1">
+                <span className="font-mono text-[9px] uppercase tracking-widest text-outline">Shared secret</span>
+                <span className="text-right font-mono text-[11px] text-on-surface-variant break-all">
+                  {decap.shared_secret.slice(0, 32)}…
+                </span>
+              </div>
+              {match !== null && (
+                <div className="flex items-start justify-between gap-4 py-1">
+                  <span className="font-mono text-[9px] uppercase tracking-widest text-outline">Match</span>
+                  <span>
+                    {match ? (
+                      <span className="chip chip-verified">Match</span>
+                    ) : (
+                      <span className="chip chip-degraded">Mismatch</span>
+                    )}
+                  </span>
+                </div>
+              )}
+            </div>
+          ) : (
+            <div className="flex h-28 items-center justify-center rounded-lg border border-dashed border-outline-variant/25">
+              <span className="font-mono text-[11px] text-outline/50">
+                {encap ? 'Click Decapsulate' : 'Complete step 2 first'}
+              </span>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );

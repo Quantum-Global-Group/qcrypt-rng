@@ -1,217 +1,222 @@
 'use client';
 
 import Link from 'next/link';
-import { useCallback, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
+import {
+  Activity,
+  BookOpen,
+  Link2,
+  Shield,
+  Zap,
+} from 'lucide-react';
 import { LiveEntropyOraclePanel } from '@/components/dashboard/LiveEntropyOraclePanel';
-import { checkHealth, listFulfillmentRequests } from '@/utils/api';
-import type { FulfillmentRequestItem } from '@/types';
-import { GuidedTour } from '@/components/tours/GuidedTour';
-import { tours } from '@/components/tours/TourDefinitions';
+import { checkHealth } from '@/utils/api';
 
-const PQC: {
-  title: string;
-  sub: string;
-  desc: string;
-  lat: string;
-  v: boolean;
-  href: string;
-  cta: string;
-}[] = [
+/* ─── section cards ─────────────────────────────────────────────────────────── */
+
+const SECTIONS = [
   {
-    title: 'Kyber-768',
-    sub: 'Lattice-based KEM',
-    desc: 'NIST-standardized key encapsulation mechanism providing security against classical and quantum threats.',
-    lat: '0.12ms',
-    v: true,
-    href: '/pqc/kem',
-    cta: 'Kyber KEM',
+    id: 'randomness',
+    eyebrow: 'QRNG · ENTROPY · TOKENS',
+    label: 'Randomness',
+    Icon: Zap,
+    accent: 'text-secondary',
+    border: 'border-secondary/20 hover:border-secondary/40',
+    dot: 'bg-secondary',
+    ctaBorder: 'border-secondary/30 bg-secondary/10 text-secondary hover:bg-secondary/15',
+    badge: 'LIVE',
+    badgeCls: 'chip-info',
+    desc: 'Quantum-sourced entropy using real quantum circuit simulation. Generate provably random bytes, keys, UUIDs, passwords, and tokens.',
+    features: [
+      { label: 'Generate',         desc: 'Bytes, keys, UUIDs, passwords & tokens', href: '/oracle/request' },
+      { label: 'QRNG Engine',      desc: 'Circuit configuration & output analysis', href: '/research/qrng' },
+      { label: 'Entropy Analysis', desc: 'NIST SP 800-90B statistical tests',       href: '/research/entropy' },
+    ],
+    cta: { label: 'Generate Entropy', href: '/oracle/request' },
   },
   {
-    title: 'Dilithium-3',
-    sub: 'Digital Signature',
-    desc: 'High-performance lattice-based digital signature scheme for secure authentication and identity verification.',
-    lat: '0.45ms',
-    v: true,
-    href: '/pqc/keys',
-    cta: 'Key generation',
+    id: 'cryptography',
+    eyebrow: 'ENCRYPT · SIGN · PQC · HASH',
+    label: 'Cryptography',
+    Icon: Shield,
+    accent: 'text-primary',
+    border: 'border-primary/20 hover:border-primary/40',
+    dot: 'bg-primary',
+    ctaBorder: 'border-primary/30 bg-primary/10 text-primary hover:bg-primary/15',
+    badge: 'LIVE',
+    badgeCls: 'chip-verified',
+    desc: 'Full-stack post-quantum cryptography suite — NIST-standardized algorithms for encryption, key exchange, and digital signatures.',
+    features: [
+      { label: 'PQC Suite',      desc: 'AES, HMAC, encrypt & sign documents',     href: '/pqc' },
+      { label: 'Key Generation', desc: 'ML-KEM, ML-DSA, FN-DSA keypairs',         href: '/pqc/keys' },
+      { label: 'Kyber KEM',      desc: 'FIPS 203 key encapsulation mechanism',    href: '/pqc/kem' },
+      { label: 'Research Lab',   desc: 'Signatures, Hybrid PQC, Benchmarks',      href: '/research/pqc/kem' },
+    ],
+    cta: { label: 'Open PQC Suite', href: '/pqc' },
   },
   {
-    title: 'Falcon-1024',
-    sub: 'Fast-Fourier Signature',
-    desc: 'Compact signature scheme utilizing NTRU lattices and fast Fourier sampling. Highly memory efficient.',
-    lat: '0.88ms',
-    v: false,
-    href: '/research/pqc/benchmarks',
-    cta: 'Benchmarks',
+    id: 'blockchain',
+    eyebrow: 'ORACLE · VRF · WALLET · CHAIN',
+    label: 'Blockchain',
+    Icon: Link2,
+    accent: 'text-tertiary',
+    border: 'border-tertiary/20 hover:border-tertiary/40',
+    dot: 'bg-tertiary',
+    ctaBorder: 'border-tertiary/30 bg-tertiary/10 text-tertiary hover:bg-tertiary/15',
+    badge: 'TESTNET',
+    badgeCls: 'chip-simulated',
+    desc: 'On-chain quantum randomness delivery with verifiable random functions, commit-reveal proofs, and quantum-safe smart wallets.',
+    features: [
+      { label: 'Fulfillment',      desc: 'Multi-chain oracle delivery wizard',       href: '/fulfillment' },
+      { label: 'VRF & Commitment', desc: 'On-chain commit-reveal proof protocol',    href: '/research/vrf' },
+      { label: 'Oracle Lab',       desc: 'Oracle config, requests & proofs',         href: '/research/oracle' },
+    ],
+    cta: { label: 'Open Oracle', href: '/fulfillment' },
   },
-];
+  {
+    id: 'intelligence',
+    eyebrow: 'ALGORITHMS · AUDIT · DATASETS',
+    label: 'Intelligence',
+    Icon: Activity,
+    accent: 'text-error',
+    border: 'border-error/20 hover:border-error/40',
+    dot: 'bg-error',
+    ctaBorder: 'border-error/30 bg-error/10 text-error hover:bg-error/15',
+    badge: 'LIVE',
+    badgeCls: 'chip-verified',
+    desc: 'Cryptographic algorithm analysis, performance benchmarking, and research data management for quantum-era threat assessment.',
+    features: [
+      { label: 'Experiment Log', desc: 'Session audit trail & export',              href: '/research/notebook' },
+      { label: 'IBM Runtime',    desc: 'IBM Cloud + CRN, Shor×blockchain workflow', href: '/research/ibm-runtime' },
+      { label: 'Datasets',       desc: 'Export JSON / NDJSON research data',        href: '/research/datasets' },
+      { label: 'References',     desc: 'NIST standards, FIPS & academic papers',    href: '/research/refs' },
+    ],
+    cta: { label: 'Open Intelligence', href: '/research/notebook' },
+  },
+] as const;
 
-const QUICK_LINKS: { href: string; label: string; accent?: boolean }[] = [
-  { href: '/oracle/request', label: 'Request Randomness', accent: true },
-  { href: '/pqc', label: 'PQC Suite' },
-  { href: '/fulfillment', label: 'Fulfillment' },
-  { href: '/research/qrng', label: 'QRNG Engine' },
-  { href: '/research/entropy', label: 'Entropy Analysis' },
-  { href: '/research/vrf', label: 'VRF Tools' },
-];
-
-const MOCK_LOGS = [
-  { t: '14:22:01', b: 'SUCCESS', cls: 'bg-secondary/10 text-secondary', body: '7d2a...f910 requested by 0xQuantumApp_Alpha', src: 'QRNG-01' },
-  { t: '14:18:55', b: 'SUCCESS', cls: 'bg-secondary/10 text-secondary', body: 'a3e1...bb24 requested by 0xSecureVault_v2', src: 'QRNG-01' },
-  { t: '14:15:20', b: 'REROUTE', cls: 'bg-tertiary/10 text-tertiary', body: 'Hardware latency peak detected. Switched to Backup Entropic Sink.', src: 'QRNG-02' },
-];
+/* ─── component ─────────────────────────────────────────────────────────────── */
 
 export function OracleDashboard() {
   const [apiOk, setApiOk] = useState<boolean | null>(null);
-  const [fulfillment, setFulfillment] = useState<FulfillmentRequestItem[]>([]);
 
   useEffect(() => {
     let a = true;
     checkHealth().then(() => a && setApiOk(true)).catch(() => a && setApiOk(false));
-    listFulfillmentRequests()
-      .then((r) => a && setFulfillment(r.data.requests?.slice(0, 5) ?? []))
-      .catch(() => {});
-    return () => {
-      a = false;
-    };
-  }, []);
-
-  const fmtReq = useCallback((r: FulfillmentRequestItem) => {
-    const short = r.request_id.length > 12 ? `${r.request_id.slice(0, 6)}...${r.request_id.slice(-4)}` : r.request_id;
-    return `${short} · ${r.chain} · ${r.status}`;
+    return () => { a = false; };
   }, []);
 
   return (
-    <GuidedTour
-      tourId="dashboard"
-      steps={tours.dashboard}
-      enabled={true}
-    >
-      <div className="min-w-0 text-on-surface">
-        <div className="min-w-0 space-y-8 py-6 sm:py-8">
-          {/* Hero */}
-          <section className="flex min-w-0 flex-col justify-between gap-6 md:flex-row md:items-end">
-            <div className="min-w-0">
-              <h2 className="mb-2 font-headline text-3xl font-bold tracking-tight text-on-surface">Quantum Randomness Oracle</h2>
-              <div className="flex flex-wrap items-center gap-3">
-                <div className="flex items-center gap-2 rounded-full border border-secondary/20 bg-secondary/10 px-3 py-1">
-                  <span className="relative flex h-2 w-2">
-                    <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-secondary opacity-75" />
-                    <span className="relative inline-flex h-2 w-2 rounded-full bg-secondary" />
-                  </span>
-                  <span className="font-mono text-[10px] font-bold uppercase tracking-widest text-secondary">
-                    Verified Hardware Source: {apiOk ? 'ACTIVE' : apiOk === false ? 'DEGRADED' : '…'}
-                  </span>
-                </div>
-                <span className="font-mono text-[10px] uppercase tracking-wider text-outline">Ref: QRNG-NODE-7721</span>
+    <div className="min-w-0 text-on-surface">
+      <div className="min-w-0 space-y-8 py-8 sm:py-10">
+
+          {/* ── Hero ─────────────────────────────────────────────────────── */}
+          <section className="flex flex-wrap items-center justify-between gap-4">
+            <div>
+              <div className="mb-2 flex items-center gap-2">
+                <span className={`h-[5px] w-[5px] rounded-full ${apiOk ? 'bg-primary animate-pulse' : apiOk === false ? 'bg-error' : 'bg-outline/50'}`} />
+                <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-outline">
+                  {apiOk ? 'All systems online' : apiOk === false ? 'System degraded' : 'Connecting…'}
+                </span>
               </div>
+              <h1 className="font-headline text-2xl font-light tracking-tight text-on-surface sm:text-3xl">
+                Quantum Cryptography
+                <span className="block text-primary">&amp; Intelligence Platform</span>
+              </h1>
+              <p className="mt-2 max-w-lg text-[12px] leading-relaxed text-on-surface-variant">
+                Post-quantum cryptography, quantum-sourced entropy, and blockchain oracle services — NIST-standardized and research-grade.
+              </p>
             </div>
           </section>
 
-          {/* Quick links — gateway to all platform features */}
-          <section data-tour="quick-links" className="flex min-w-0 flex-wrap gap-2">
-          {QUICK_LINKS.map((item) => (
-            <Link
-              key={item.href}
-              href={item.href}
-              className={
-                item.accent
-                  ? 'flex items-center gap-2 rounded bg-primary-container px-5 py-2.5 text-xs font-bold uppercase tracking-widest text-on-primary-container transition-all active:scale-95'
-                  : 'rounded bg-surface-container-high px-4 py-2.5 text-xs font-bold uppercase tracking-widest text-on-surface-variant transition-colors hover:bg-surface-container-highest'
-              }
-            >
-              {item.label}
-            </Link>
-          ))}
-        </section>
-
-        {/* Live entropy */}
-        <div data-tour="entropy-panel">
-          <LiveEntropyOraclePanel />
-        </div>
-
-        {/* PQC algorithm cards */}
-        <section data-tour="pqc-cards" className="min-w-0 space-y-4">
-          <div className="flex flex-wrap items-center justify-between gap-2">
-            <h2 className="font-label text-[11px] font-bold uppercase tracking-[0.1em] text-on-surface-variant">
-              Post-Quantum Cryptography Suite
-            </h2>
-            <span className="font-mono text-[9px] uppercase text-outline">Module V-0.8.2</span>
-          </div>
-          <div className="grid min-w-0 grid-cols-1 gap-6 md:grid-cols-3">
-            {PQC.map((c) => (
-              <div
-                key={c.title}
-                className="group min-w-0 rounded-lg border border-transparent bg-surface-container-low p-5 transition-colors hover:bg-surface-container"
-              >
-                <div className="mb-4 flex items-start justify-between gap-2">
-                  <div className="min-w-0">
-                    <h3 className="font-headline text-lg font-bold leading-tight">{c.title}</h3>
-                    <p className="mt-1 font-mono text-[10px] text-outline">{c.sub}</p>
+          {/* ── Section cards ────────────────────────────────────────────── */}
+          <section className="grid min-w-0 grid-cols-1 gap-4 md:grid-cols-2">
+            {SECTIONS.map((s) => {
+              const Icon = s.Icon;
+              return (
+                <div
+                  key={s.id}
+                  className={`group relative min-w-0 rounded-lg border bg-surface-container-low p-5 transition-colors ${s.border}`}
+                >
+                  {/* Header */}
+                  <div className="mb-4 flex items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <p className={`mb-1 font-mono text-[9px] font-semibold uppercase tracking-[0.14em] opacity-60 ${s.accent}`}>
+                        {s.eyebrow}
+                      </p>
+                      <div className="flex items-center gap-2">
+                        <Icon className={`h-4 w-4 shrink-0 ${s.accent}`} strokeWidth={1.75} />
+                        <h2 className={`font-headline text-base font-semibold ${s.accent}`}>{s.label}</h2>
+                      </div>
+                    </div>
+                    <span className={`chip shrink-0 ${s.badgeCls}`}>{s.badge}</span>
                   </div>
-                  <span
-                    className={`shrink-0 rounded px-2 py-0.5 font-mono text-[9px] font-bold uppercase ${
-                      c.v ? 'bg-secondary/10 text-secondary' : 'bg-tertiary/10 text-tertiary'
-                    }`}
+
+                  {/* Description */}
+                  <p className="mb-4 text-[11px] leading-relaxed text-on-surface-variant">{s.desc}</p>
+
+                  {/* Feature links */}
+                  <div className="mb-5 space-y-1">
+                    {s.features.map((f) => (
+                      <Link
+                        key={f.href}
+                        href={f.href}
+                        className="flex items-start gap-2 rounded px-1 py-1 transition-colors hover:bg-surface-container"
+                      >
+                        <span className={`mt-px font-mono text-[10px] opacity-60 ${s.accent}`}>▸</span>
+                        <div className="min-w-0">
+                          <span className="font-mono text-[10.5px] font-semibold text-on-surface">{f.label}</span>
+                          <span className="font-mono text-[9px] text-outline"> — {f.desc}</span>
+                        </div>
+                      </Link>
+                    ))}
+                  </div>
+
+                  {/* CTA */}
+                  <Link
+                    href={s.cta.href}
+                    className={`inline-flex items-center rounded border px-3.5 py-1.5 font-mono text-[10px] font-semibold uppercase tracking-wider transition-colors ${s.ctaBorder}`}
                   >
-                    {c.v ? 'Verified' : 'Simulated'}
-                  </span>
+                    {s.cta.label} →
+                  </Link>
                 </div>
-                <p className="mb-6 text-[11px] leading-relaxed text-on-surface-variant opacity-80">{c.desc}</p>
-                <div className="flex flex-col gap-3 border-t border-outline-variant/10 pt-4 sm:flex-row sm:items-center sm:justify-between">
-                  <span className="font-mono text-[10px] text-outline">Latency: {c.lat}</span>
-                  <div className="flex flex-wrap items-center gap-3">
-                    <Link
-                      href={c.href}
-                      className="font-label text-[10px] font-bold uppercase tracking-widest text-primary group-hover:underline"
-                    >
-                      {c.cta}
-                    </Link>
-                    <span className="text-outline-variant">&middot;</span>
-                    <Link href="/pqc" className="font-label text-[10px] font-bold uppercase tracking-widest text-on-surface-variant hover:text-on-surface">
-                      Workspace
-                    </Link>
-                  </div>
+              );
+            })}
+          </section>
+
+          {/* ── Live entropy stream ──────────────────────────────────────── */}
+          <section className="min-w-0">
+            <div className="mb-3 flex items-center gap-2">
+              <span className="h-[5px] w-[5px] rounded-full bg-secondary animate-pulse" />
+              <span className="font-mono text-[9px] font-semibold uppercase tracking-[0.12em] text-outline">
+                Live Entropy Stream
+              </span>
+              <span className="h-px flex-1 bg-outline-variant/20" />
+              <span className="font-mono text-[9px] text-outline">Quantum-sourced · Real-time</span>
+            </div>
+            <LiveEntropyOraclePanel />
+          </section>
+
+          {/* ── Docs strip ───────────────────────────────────────────────── */}
+          <section>
+            <Link
+              href="/docs"
+              className="group flex min-w-0 items-center justify-between gap-4 rounded-lg border border-outline-variant/15 bg-surface-container-low px-5 py-4 transition-colors hover:border-outline-variant/30 hover:bg-surface-container"
+            >
+              <div className="flex items-center gap-3">
+                <BookOpen className="h-4 w-4 shrink-0 text-outline group-hover:text-on-surface-variant" strokeWidth={1.75} />
+                <div>
+                  <div className="font-mono text-[11px] font-semibold text-on-surface">Documentation</div>
+                  <div className="font-mono text-[9px] text-outline">API reference · Integration guides · SDK usage</div>
                 </div>
               </div>
-            ))}
-          </div>
-        </section>
-
-        {/* Fulfillment log */}
-        <section className="min-w-0 rounded-lg bg-surface-container-lowest p-6">
-          <div className="mb-6 flex items-center justify-between gap-2">
-            <h2 className="font-label text-[11px] font-bold uppercase tracking-[0.1em] text-on-surface-variant">
-              Recent Fulfillment Operations
-            </h2>
-            <Link href="/fulfillment" className="font-mono text-[10px] text-outline transition-colors hover:text-on-surface">
-              VIEW_ALL_LOGS
+              <span className="shrink-0 font-mono text-[10px] text-on-surface-variant group-hover:text-on-surface">
+                Open Docs →
+              </span>
             </Link>
-          </div>
-          <div className="space-y-4">
-            {fulfillment.length > 0
-              ? fulfillment.map((r) => (
-                  <div key={r.request_id} className="flex items-center gap-4 rounded px-2 py-2 transition-colors hover:bg-surface-container-low">
-                    <div className="w-16 font-mono text-[10px] text-outline">
-                      {r.created_at ? new Date(r.created_at).toLocaleTimeString() : '—'}
-                    </div>
-                    <div className="rounded bg-secondary/10 px-2 py-0.5 font-mono text-[10px] text-secondary">{r.status}</div>
-                    <div className="min-w-0 flex-1 truncate font-mono text-xs text-on-surface">{fmtReq(r)}</div>
-                    <div className="font-mono text-[10px] text-outline">{r.chain}</div>
-                  </div>
-                ))
-              : MOCK_LOGS.map((row) => (
-                  <div key={row.t + row.body} className="flex items-center gap-4 rounded px-2 py-2 transition-colors hover:bg-surface-container-low">
-                    <div className="w-16 font-mono text-[10px] text-outline">{row.t}</div>
-                    <div className={`rounded px-2 py-0.5 font-mono text-[10px] ${row.cls}`}>{row.b}</div>
-                    <div className="min-w-0 flex-1 truncate font-mono text-xs text-on-surface">{row.body}</div>
-                    <div className="font-mono text-[10px] text-outline">Source: {row.src}</div>
-                  </div>
-                ))}
-          </div>
-        </section>
+          </section>
+
       </div>
     </div>
-    </GuidedTour>
   );
 }
