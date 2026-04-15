@@ -1,0 +1,38 @@
+# Example Fly.io configuration for QCrypt RNG (Nginx :7860 → FastAPI + Next.js).
+#
+# Usage:
+#   1. fly launch --no-deploy
+#   2. Merge the blocks below into the generated fly.toml (or copy this file to fly.toml
+#      and set `app` + `primary_region` to match what `fly launch` created).
+#   3. Replace YOUR-APP-NAME with your real Fly app name everywhere below.
+#   4. fly config validate
+#   5. fly secrets set SECRET_KEY=... ALLOWED_ORIGINS="https://YOUR-APP-NAME.fly.dev"
+#   6. fly deploy
+#
+# Official reference: https://fly.io/docs/reference/configuration/
+
+app = "YOUR-APP-NAME"
+primary_region = "iad"
+
+[build]
+  dockerfile = "Dockerfile"
+  [build.args]
+    NEXT_PUBLIC_API_BASE_URL = "https://YOUR-APP-NAME.fly.dev/api/v2"
+
+[http_service]
+  internal_port = 7860
+  force_https = true
+  auto_stop_machines = "stop"
+  auto_start_machines = true
+  min_machines_running = 0
+
+[[http_service.checks]]
+  interval = "15s"
+  timeout = "10s"
+  grace_period = "45s"
+  method = "GET"
+  path = "/health"
+
+# If the machine OOMs during build or boot, raise memory, e.g.:
+# [[vm]]
+#   memory = "2gb"

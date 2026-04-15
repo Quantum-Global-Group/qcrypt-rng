@@ -40,7 +40,7 @@ class QCryptClient:
     post-quantum cryptography, and blockchain security features.
     """
     
-    def __init__(self, base_url: str = "http://localhost:8000", api_key: Optional[str] = None):
+    def __init__(self, base_url: str = "http://localhost:9878", api_key: Optional[str] = None):
         """
         Initialize the QCrypt client
         
@@ -548,7 +548,7 @@ class QCryptAPIError(Exception):
 # Example usage
 if __name__ == "__main__":
     # Initialize client
-    client = QCryptClient(base_url="http://localhost:8000", api_key="your-api-key")
+    client = QCryptClient(base_url="http://localhost:9878", api_key="your-api-key")
     
     # Generate quantum random bytes
     try:

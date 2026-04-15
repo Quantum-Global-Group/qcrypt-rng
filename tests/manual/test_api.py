@@ -32,7 +32,7 @@ except ImportError:
 console = Console()
 
 # API Base URL
-BASE_URL = "http://localhost:8000"
+BASE_URL = "http://localhost:9878"
 API_V2 = f"{BASE_URL}/api/v2"
 
 

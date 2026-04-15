@@ -1,22 +1,22 @@
 #!/usr/bin/env node
 /**
- * Picks a TCP port for this app: start from a project-specific base (default 3040),
- * not 3000, so other tools can keep using 3000 without clashing.
+ * Picks a TCP port for this app: start from a project-specific base (default 3980),
+ * not 3000/3040/3180, so other Next.js projects can use those without clashing.
  * If the base is busy, scans upward until a free port is found (same behavior
  * each run when the previous dev server has stopped — the base is stable).
  *
  * Priority: CLI arg > QUANTUM_ORACLE_UI_PORT env > .env.local > default base.
  *
  * Usage:
- *   node find-port.js           -> prints e.g. "3040"
- *   node find-port.js 3050      -> scan from 3050
+ *   node find-port.js           -> prints e.g. "3980"
+ *   node find-port.js 3990      -> scan from 3990
  */
 
 const fs = require('fs');
 const net = require('net');
 const path = require('path');
 
-const DEFAULT_BASE = 3040;
+const DEFAULT_BASE = 3980;
 const maxTries = 30;
 
 function readQuantumOracleUiPortFromEnvLocal() {

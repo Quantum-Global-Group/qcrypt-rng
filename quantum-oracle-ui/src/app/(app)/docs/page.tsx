@@ -118,7 +118,7 @@ export default function DocsPage() {
               <h2 className="mb-4 text-2xl font-semibold text-on-surface">Authentication</h2>
               <p className="mb-6 text-on-surface-variant leading-relaxed">
                 Point <code className="font-mono text-primary">NEXT_PUBLIC_API_BASE_URL</code> at your API root (e.g.{' '}
-                <code className="font-mono text-sm">http://localhost:8000/api/v2</code>). The UI discovers healthy ports
+                <code className="font-mono text-sm">http://localhost:9878/api/v2</code>). The UI discovers healthy ports
                 automatically when unset.
               </p>
             </section>

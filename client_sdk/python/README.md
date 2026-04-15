@@ -64,7 +64,7 @@ print(f"RSA-2048 threat: {result['data']['assessment']['status']}")
 
 The client accepts the following parameters:
 
-- `base_url`: Base URL of the QCrypt API server (default: "http://localhost:8000")
+- `base_url`: Base URL of the QCrypt API server (default: "http://localhost:9878")
 - `api_key`: API key for authentication (optional if not required)
 
 ## Error Handling

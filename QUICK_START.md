@@ -56,17 +56,17 @@ The platform provides comprehensive REST APIs under `/api/v2`:
 
 ```bash
 # Generate random bytes
-curl -X POST http://localhost:8000/api/v2/generate/bytes \
+curl -X POST http://localhost:9878/api/v2/generate/bytes \
   -H "Content-Type: application/json" \
   -d '{"num_bytes": 32}'
 
 # Generate a password
-curl -X POST http://localhost:8000/api/v2/generate/password \
+curl -X POST http://localhost:9878/api/v2/generate/password \
   -H "Content-Type: application/json" \
   -d '{"length": 16, "include_symbols": true}'
 
 # Generate PQC keys
-curl -X POST http://localhost:8000/api/v2/pqc/generate \
+curl -X POST http://localhost:9878/api/v2/pqc/generate \
   -H "Content-Type: application/json" \
   -d '{"algorithm": "dilithium3"}'
 ```

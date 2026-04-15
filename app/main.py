@@ -377,20 +377,23 @@ async def metrics():
 
 
 if __name__ == "__main__":
+    import os
     import uvicorn
-    
+
+    _port = int(os.environ.get("API_PORT", "9878"))
+
     print("\n" + "="*60)
     print("🚀 QCrypt RNG - Quantum Security Platform")
     print("="*60)
     print("\nStarting demo server...")
-    print(f"📍 API Documentation: http://localhost:8000/docs")
-    print(f"📍 Demo Test: http://localhost:8000/demo/quick-test")
+    print(f"📍 API Documentation: http://localhost:{_port}/docs")
+    print(f"📍 Demo Test: http://localhost:{_port}/demo/quick-test")
     print("\n" + "="*60 + "\n")
-    
+
     uvicorn.run(
         "app.main:app",
         host="0.0.0.0",
-        port=8000,
+        port=_port,
         reload=True,
         log_level="info"
     )

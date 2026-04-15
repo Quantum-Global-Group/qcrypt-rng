@@ -4,7 +4,7 @@ import { useCallback, useState } from 'react';
 import { ResearchHeader, Panel, PanelHeader, PanelBody, MonoOut } from '@/components/research/shared';
 import { BlockchainShorWorkflow } from '@/components/research/BlockchainShorWorkflow';
 
-const API_ROOT = process.env.NEXT_PUBLIC_API_BASE_URL ?? 'http://localhost:8000/api/v2';
+const API_ROOT = process.env.NEXT_PUBLIC_API_BASE_URL ?? 'http://localhost:9878/api/v2';
 
 type SdkResponse = {
   sdk_installed?: boolean;

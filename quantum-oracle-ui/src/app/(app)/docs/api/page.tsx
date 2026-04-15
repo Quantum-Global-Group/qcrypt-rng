@@ -19,7 +19,7 @@ const SAMPLE_JSON = `{
   }
 }`;
 
-const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8000/api/v2';
+const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:9878/api/v2';
 const CURL = `curl -X GET "${API_BASE}/quantum/entropy"`;
 
 export default function ApiReferencePage() {
@@ -104,7 +104,7 @@ export default function ApiReferencePage() {
             </h2>
             <p className="text-sm leading-relaxed text-on-surface-variant">
               When enabled, include credentials per your deployment policy. For local development, the UI auto-discovers
-              the backend on ports 8000–8004.
+              the backend on ports 9878–9882.
             </p>
             <div className="rounded-lg border border-outline-variant/10 bg-surface-container-low p-4">
               <div className="mb-2 flex items-center gap-2 font-mono text-[11px] text-outline">

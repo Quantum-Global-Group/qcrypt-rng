@@ -26,14 +26,19 @@ class Settings(BaseSettings):
 
     # API Configuration
     api_host: str = Field(default="0.0.0.0", env="API_HOST")
-    api_port: int = Field(default=8000, env="API_PORT")
+    api_port: int = Field(default=9878, env="API_PORT")
     api_prefix: str = Field(default="/api/v2", env="API_PREFIX")
-    # Include quantum-oracle-ui default dev port (find-port.js → 3040) or health checks from the browser fail CORS → UI shows "Offline".
+    # Include quantum-oracle-ui dev origin (find-port.js base → 3980) or browser health checks fail CORS → UI shows "Offline".
+    # Older ports kept so existing .env / bookmarks still work.
     allowed_origins: List[str] = Field(
         default=[
             "http://localhost:3000",
             "http://localhost:3040",
             "http://127.0.0.1:3040",
+            "http://localhost:3180",
+            "http://127.0.0.1:3180",
+            "http://localhost:3980",
+            "http://127.0.0.1:3980",
             "http://localhost:8501",
         ],
         env="ALLOWED_ORIGINS"

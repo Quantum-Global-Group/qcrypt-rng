@@ -1,0 +1,9 @@
+# Hugging Face Gradio lite — install from repository root alongside shared `app/` code.
+#   pip install -r hf_space/requirements.txt
+#
+# Pins align loosely with root `requirements.txt` for qiskit; bump as needed.
+
+gradio>=5.0.0
+numpy>=1.26.0
+qiskit>=1.2.0
+qiskit-ibm-runtime>=0.31.0

@@ -56,7 +56,7 @@ python run_api.py
 
 Use a **`.venv`** in the project root (not `venv/`). `scripts/start.py` also looks for `.venv/bin/python`.
 
-API: http://localhost:8000 — Interactive docs: http://localhost:8000/docs
+API: http://localhost:9878 — Interactive docs: http://localhost:9878/docs
 
 **Frontend:**
 
@@ -66,11 +66,13 @@ npm install
 npm run dev
 ```
 
-Dashboard: **http://localhost:3040** by default (`quantum-oracle-ui/find-port.js` picks the next free port from 3040 upward so this project does not grab 3000). Auto-discovers API on ports 8000–8004, or set `NEXT_PUBLIC_API_BASE_URL`. See `quantum-oracle-ui/env.example`.
+Dashboard: **http://localhost:3980** by default (`quantum-oracle-ui/find-port.js` picks the next free port from 3980 upward — qcrypt-rng-specific so it avoids 3000/3040/3180 used by many stacks). Auto-discovers API on ports 9878–9882, or set `NEXT_PUBLIC_API_BASE_URL`. See `quantum-oracle-ui/env.example`.
 
 **Production:** See [docs/PRODUCTION.md](docs/PRODUCTION.md). For Docker: `docker-compose up -d` or Kubernetes via `./deploy.sh`.
 
 **Hugging Face Spaces:** The root `Dockerfile` is built for Spaces (Nginx + FastAPI + Next.js on port 7860). Create a Docker Space, add the Space as a remote, and push `main`; use a [HF token](https://huggingface.co/settings/tokens) with write access when prompted. The app will be available at your Space URL after the build completes.
+
+**Hugging Face Gradio lite (IBM Runtime slice):** smaller demo using Gradio and shared backend logic — [hf_space/README.md](hf_space/README.md), [docs/HF_GRADIO_LITE.md](docs/HF_GRADIO_LITE.md), [docs/VENTURE.md](docs/VENTURE.md).
 
 ---
 
@@ -213,7 +215,7 @@ Base path: `/api/v2`.
 | `GET /hardware/devices` | List hardware devices |
 | `GET /monitoring/metrics` | Prometheus metrics |
 
-Full interactive API docs: http://localhost:8000/docs (or `/swagger` when running behind the bundled Nginx).
+Full interactive API docs: http://localhost:9878/docs (or `/swagger` when running behind the bundled Nginx).
 
 ---
 

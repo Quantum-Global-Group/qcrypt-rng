@@ -4,14 +4,25 @@ QCrypt RNG - Run FastAPI Server
 Starts the API server with automatic port detection.
 """
 
+import os
 import sys
 import socket
 from pathlib import Path
 
 # Add project root to path
-sys.path.append(str(Path(__file__).parent))
+_REPO_ROOT = Path(__file__).parent
+sys.path.append(str(_REPO_ROOT))
 
-DEFAULT_PORT = 8000
+try:
+    from dotenv import load_dotenv
+
+    load_dotenv(_REPO_ROOT / ".env")
+except ImportError:
+    pass
+
+# Local dev default for qcrypt-rng only (avoids clashing with other FastAPI apps on 8000/8780).
+# Override with API_PORT in `.env` or the environment.
+DEFAULT_PORT = int(os.environ.get("API_PORT", "9878"))
 
 
 def is_port_in_use(port: int) -> bool:

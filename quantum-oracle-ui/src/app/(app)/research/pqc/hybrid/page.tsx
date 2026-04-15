@@ -98,7 +98,7 @@ export default function HybridPQCPage() {
   const [loadingKemEncap, setLoadingKemEncap] = useState(false);
   const [loadingKemDecap, setLoadingKemDecap] = useState(false);
 
-  const API = process.env.NEXT_PUBLIC_API_BASE_URL ?? 'http://localhost:8000/api/v2';
+  const API = process.env.NEXT_PUBLIC_API_BASE_URL ?? 'http://localhost:9878/api/v2';
 
   const generateKeypair = useCallback(async () => {
     setLoadingKey(true);

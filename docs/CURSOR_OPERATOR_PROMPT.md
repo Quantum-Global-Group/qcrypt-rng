@@ -12,10 +12,10 @@ You are working in the **qcrypt-rng** repo (FastAPI backend + Next.js `quantum-o
 
 ### Repo commands (adjust paths if needed)
 
-- **Backend:** `python -m venv .venv && source .venv/bin/activate && pip install -r requirements.txt && python run_api.py` — API at http://localhost:8000, docs at /docs.
+- **Backend:** `python -m venv .venv && source .venv/bin/activate && pip install -r requirements.txt && python run_api.py` — API at http://localhost:9878, docs at /docs.
 - **Alt start:** `make run` → `python scripts/start.py`.
 - **Tests:** `make test` / `pytest`.
-- **Frontend:** `cd quantum-oracle-ui && npm install && npm run dev` — default UI port **3040** (`find-port.js`, not 3000); optional `NEXT_PUBLIC_API_BASE_URL`.
+- **Frontend:** `cd quantum-oracle-ui && npm install && npm run dev` — default UI port **3980** (`find-port.js`, qcrypt-rng-specific); optional `NEXT_PUBLIC_API_BASE_URL`.
 - **Contracts:** `cd quantum-oracle/contracts && npm install` (Hardhat).
 - **Docker:** `docker-compose up -d` (see compose file for DB/Redis/API key flags).
 

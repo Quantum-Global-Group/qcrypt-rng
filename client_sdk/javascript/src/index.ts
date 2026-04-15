@@ -217,7 +217,7 @@ export class QCryptClient {
   private readonly fetchImpl: typeof fetch;
 
   constructor(options: QCryptClientOptions = {}) {
-    this.baseUrl = (options.baseUrl ?? "http://localhost:8000").replace(/\/$/, "");
+    this.baseUrl = (options.baseUrl ?? "http://localhost:9878").replace(/\/$/, "");
     this.apiKey = options.apiKey;
     this.fetchImpl = options.fetchImpl ?? fetch;
   }

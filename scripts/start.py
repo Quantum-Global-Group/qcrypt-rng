@@ -16,9 +16,9 @@ PROJECT_ROOT = Path(__file__).resolve().parent.parent
 VENV_PYTHON = PROJECT_ROOT / ".venv" / "bin" / "python"
 FRONTEND_DIR = PROJECT_ROOT / "quantum-oracle-ui"
 
-# Default ports
-API_DEFAULT_PORT = 8000
-UI_DEFAULT_PORT = 3000
+# Default ports (qcrypt-rng only; override via API_PORT / QUANTUM_ORACLE_UI_PORT / .env.local)
+API_DEFAULT_PORT = 9878
+UI_DEFAULT_PORT = 3980
 
 # Colour helpers (ANSI)
 BOLD = "\033[1m"

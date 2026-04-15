@@ -8,7 +8,7 @@ import httpx
 from typing import Dict, Any
 
 # API base URL
-BASE_URL = "http://localhost:8000/api/v2"
+BASE_URL = "http://localhost:9878/api/v2"
 
 
 class DemoTester:
@@ -182,7 +182,7 @@ class DemoTester:
         
         # Check if API is running
         try:
-            response = await self.client.get("http://localhost:8000/")
+            response = await self.client.get("http://localhost:9878/")
             if response.status_code != 200:
                 print("❌ API is not responding. Please start the server first.")
                 return
@@ -214,7 +214,7 @@ class DemoTester:
         if passed == total:
             print("\n🎉 All demo components are working perfectly!")
             print("\n📍 Next steps:")
-            print("   1. Visit http://localhost:8000/docs for interactive API")
+            print("   1. Visit http://localhost:9878/docs for interactive API")
             print("   2. Try the full demo flow")
             print("   3. Test with your own data")
         else:

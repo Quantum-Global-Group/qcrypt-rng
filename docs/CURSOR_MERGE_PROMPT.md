@@ -6,8 +6,8 @@ Paste this into a new Cursor chat (or use this file as context). It ties the **r
 
 ## Project facts (verify if unsure)
 
-- Backend: `python run_api.py` or `make run` / `scripts/start.py`; API often `http://localhost:8000`, docs at `/docs`.
-- Frontend: `cd quantum-oracle-ui && npm install && npm run dev` (port often from `find-port.js`, ~3040+).
+- Backend: `python run_api.py` or `make run` / `scripts/start.py`; API often `http://localhost:9878`, docs at `/docs`.
+- Frontend: `cd quantum-oracle-ui && npm install && npm run dev` (port often from `find-port.js`, ~3980+).
 - Two UI shells: **operator** `(app)` + `AppShell`/`SideNav` (e.g. `/dashboard`, `/pqc`); **research** `/research/*` + `ResearchShell`.
 - Merge goal (product): one coherent “lab + ops” experience: **live entropy/oracle stream** + **PQC workspace** (encrypt/hash/sign/passwords) + **deep research routes** (`/research/...`) without duplicating backend APIs.
 

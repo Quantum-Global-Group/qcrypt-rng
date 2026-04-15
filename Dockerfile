@@ -31,6 +31,9 @@ WORKDIR /app/quantum-oracle-ui
 RUN npm ci --prefer-offline 2>/dev/null || npm install
 
 COPY quantum-oracle-ui/ /app/quantum-oracle-ui/
+# Browser API base (same origin on Fly/HF: https://<app>.fly.dev/api/v2). Override at build: docker build --build-arg ...
+ARG NEXT_PUBLIC_API_BASE_URL=
+ENV NEXT_PUBLIC_API_BASE_URL=${NEXT_PUBLIC_API_BASE_URL}
 RUN npm run build
 
 # Copy standalone static assets (Next.js standalone mode needs these)

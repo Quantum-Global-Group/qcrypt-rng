@@ -14,7 +14,7 @@ pnpm dev
 bun dev
 ```
 
-The dev server uses **port 3040** by default (see `find-port.js`; it scans upward if that port is busy — avoids colliding with other apps on 3000). Open the URL printed in the terminal (e.g. [http://localhost:3040](http://localhost:3040)).
+The dev server uses **port 3980** by default (see `find-port.js`; it scans upward if that port is busy — qcrypt-rng-specific, avoids colliding with other apps on 3000/3040/3180). Open the URL printed in the terminal (e.g. [http://localhost:3980](http://localhost:3980)).
 
 You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
 

@@ -378,6 +378,110 @@ textarea:focus {
               color: var(--color-on-surface); letter-spacing: -0.02em; line-height: 1; }
 .stat-unit  { font-size: 0.6875rem; color: var(--color-outline); font-weight: 400; }
 
+/* ═══════════════════════════════════════════════════════════════════════════
+   OFF-WHITE × DESIGN-HANDOFF vocabulary
+   Virgil Abloh — "I am the in-between of everything"
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* Diagonal stripe — the signature motif */
+.ow-stripe {
+  background-image: repeating-linear-gradient(
+    -45deg,
+    transparent,
+    transparent 5px,
+    rgba(255, 255, 255, 0.022) 5px,
+    rgba(255, 255, 255, 0.022) 10px
+  );
+}
+.ow-stripe-dense {
+  background-image: repeating-linear-gradient(
+    -45deg,
+    transparent,
+    transparent 3px,
+    rgba(255, 255, 255, 0.03) 3px,
+    rgba(255, 255, 255, 0.03) 6px
+  );
+}
+
+/* Quotation marks — off-white's typographic signature */
+.ow-quote { position: relative; }
+.ow-quote::before { content: '"'; }
+.ow-quote::after  { content: '"'; }
+
+/* Bracket annotation — [LIKE THIS] */
+.bracket::before { content: '['; margin-right: 0.1em; opacity: 0.5; }
+.bracket::after  { content: ']'; margin-left: 0.1em;  opacity: 0.5; }
+
+/* Annotation label — like a Figma/Zeplin red mark */
+.annotation {
+  display: inline-flex;
+  align-items: center;
+  font-family: var(--font-mono);
+  font-size: 0.4375rem;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--color-outline);
+  border: 1px solid var(--color-outline-variant);
+  padding: 0.0625rem 0.3rem;
+  border-radius: 0;
+  white-space: nowrap;
+}
+
+/* c/o provenance mark */
+.co-mark {
+  font-family: var(--font-mono);
+  font-size: 0.4375rem;
+  font-weight: 500;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--color-outline);
+}
+.co-mark::before { content: 'c/o '; }
+
+/* Hang-tag top bar */
+.hang-tag-top {
+  border-top: 2px solid var(--color-on-surface);
+}
+
+/* Scaffold / blueprint grid overlay */
+.scaffold-grid {
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.025) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.025) 1px, transparent 1px);
+  background-size: 24px 24px;
+}
+
+/* Sequential number — hang-tag style: 001 */
+.seq-num {
+  font-family: var(--font-mono);
+  font-size: 0.5625rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: var(--color-outline);
+  user-select: none;
+}
+
+/* Measurement annotation line */
+.measure-line {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-family: var(--font-mono);
+  font-size: 0.375rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--color-outline);
+}
+.measure-line::before,
+.measure-line::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: currentColor;
+  opacity: 0.3;
+}
+
 /* ── PQC / tooling: shared form primitives (Protect, QuantumRNG, etc.) ───── */
 .error-banner {
   border-radius: var(--radius-DEFAULT);

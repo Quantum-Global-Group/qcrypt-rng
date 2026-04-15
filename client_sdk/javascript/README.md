@@ -16,7 +16,7 @@ The official JavaScript/TypeScript client for the QCrypt RNG API.
 import { QCryptClient, Algorithm } from "@qcrypt/client-sdk";
 
 const client = new QCryptClient({
-  baseUrl: "http://localhost:8000",
+  baseUrl: "http://localhost:9878",
   apiKey: "your-api-key",
 });
 

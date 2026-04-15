@@ -4,7 +4,8 @@ services:
   api:
     build: .
     ports:
-      - "8000:8000"
+      # Host 9878 → container 8000 (image still serves API on 8000 internally; see start-spaces.sh)
+      - "9878:8000"
     environment:
       - ENVIRONMENT=production
       - DEBUG=false

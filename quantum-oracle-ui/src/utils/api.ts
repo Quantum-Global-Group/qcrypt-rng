@@ -40,7 +40,7 @@ import type {
 
 let cachedBaseUrl: string | null = null;
 const ENV_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
-const FALLBACK_PORTS = [8000, 8001, 8002, 8003, 8004];
+const FALLBACK_PORTS = [9878, 9879, 9880, 9881, 9882];
 
 const timeoutFetch = async (url: string, init?: RequestInit, timeoutMs = 2500) => {
   const controller = new AbortController();
@@ -72,7 +72,7 @@ const resolveApiBaseUrl = async (): Promise<string> => {
     }
   }
 
-  cachedBaseUrl = 'http://localhost:8000/api/v2';
+  cachedBaseUrl = 'http://localhost:9878/api/v2';
   return cachedBaseUrl;
 };
 
