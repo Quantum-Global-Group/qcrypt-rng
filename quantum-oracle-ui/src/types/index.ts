@@ -251,3 +251,38 @@ export interface BatchOracleRequestItem {
   fee_required?: number;
   status: string;
 }
+
+// KEM types
+export interface KemKeypairResponse {
+  public_key: string;
+  private_key: string;
+  algorithm: string;
+  nist_level: number;
+  encoding: string;
+  key_sizes: { public_key_bytes: number; private_key_bytes: number };
+}
+
+export interface KemEncapsulateResponse {
+  ciphertext: string;
+  shared_secret: string;
+  algorithm: string;
+  encoding: string;
+}
+
+export interface KemDecapsulateResponse {
+  shared_secret: string;
+  algorithm: string;
+  encoding: string;
+  verified: boolean;
+}
+
+// Hybrid KEM + signature types
+export interface HybridKemKeypairResponse {
+  kem_public_key: string;
+  kem_private_key: string;
+  sig_public_key: string;
+  sig_private_key: string;
+  kem_algorithm: string;
+  sig_algorithm: string;
+  encoding: string;
+}

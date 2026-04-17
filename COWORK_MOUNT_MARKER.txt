@@ -1,0 +1,4 @@
+Cowork wrote this marker on 2026-04-17.
+If you find this file on your local disk, THIS is the folder Cowork is writing to,
+and this is the folder that contains the updated quantum-oracle-ui/src/app/page.tsx
+with the phosphor terminal UI.

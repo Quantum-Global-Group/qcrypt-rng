@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react';
 import { createBlockchainWallet, createVrfSeed, getOracleNetworkInfo, vrfProve, vrfReveal, vrfVerify } from '@/utils/api';
 import { Badge, CopyButton, DataRows, InfoPopover, KVRow, MonoValue } from './ui';
+import { ChainList } from './terminal/OnChainBadge';
+import { RawView } from './terminal/RawView';
 
 export const QuantumOracle = () => {
   const [walletType, setWalletType] = useState<'both' | 'vulnerable' | 'quantum-safe'>('both');
@@ -118,10 +120,10 @@ export const QuantumOracle = () => {
       {/* Supported Chains */}
       {supportedChains.length > 0 && (
         <div className="flex items-center gap-3 flex-wrap">
-          <span className="text-sm text-slate-400">Quantum oracle for:</span>
-          {supportedChains.map((chain) => (
-            <span key={chain} className="status-neutral text-xs">{chain}</span>
-          ))}
+          <span className="text-[11px] uppercase tracking-[0.15em] text-[rgb(var(--fg-dim))]">
+            oracle targets //
+          </span>
+          <ChainList chains={supportedChains} />
         </div>
       )}
 
@@ -145,10 +147,19 @@ export const QuantumOracle = () => {
         {walletResult && (
           <div className="space-y-2 pt-2">
             <div className="flex items-center justify-between">
-              <span className="text-sm font-medium text-slate-300">Wallet Details</span>
-              <CopyButton value={JSON.stringify(walletResult, null, 2)} label="Copy JSON" />
+              <span className="text-[11px] uppercase tracking-[0.12em] text-[rgb(var(--fg-dim))]">
+                wallet_details //
+              </span>
+              <CopyButton value={JSON.stringify(walletResult, null, 2)} label="copy json" />
             </div>
             <DataRows data={walletResult} />
+            <RawView
+              data={walletResult}
+              endpoint="/oracle/blockchain/wallet"
+              method="POST"
+              body={{ wallet_type: walletType }}
+              title="raw payload / curl"
+            />
           </div>
         )}
       </div>
@@ -223,13 +234,25 @@ export const QuantumOracle = () => {
             )}
 
             {vrfSeed && (
-              <div className="space-y-2 pt-2 border-t border-slate-700/30">
+              <div className="space-y-2 pt-2 border-t border-[rgb(var(--border))]">
                 <div className="flex items-center justify-between">
-                  <span className="text-sm font-medium text-slate-300">Revealed Seed</span>
-                  <CopyButton value={vrfSeed} label="Copy" />
+                  <span className="text-[11px] uppercase tracking-[0.12em] text-[rgb(var(--fg-dim))]">
+                    revealed_seed //
+                  </span>
+                  <CopyButton value={vrfSeed} label="copy" />
                 </div>
                 <MonoValue value={vrfSeed} truncate={60} />
-                <p className="text-xs text-slate-500">Anyone can now verify: commitment == keccak256(seed) and output == keccak256(seed || alpha).</p>
+                <p className="text-[11px] text-[rgb(var(--fg-dim))] font-mono">
+                  verify: <span className="text-[rgb(var(--green))]">commitment == keccak256(seed)</span>{' '}
+                  && <span className="text-[rgb(var(--green))]">output == keccak256(seed || alpha)</span>
+                </p>
+                <RawView
+                  data={{ request_id: vrfRequestId, commitment: vrfCommitment, alpha: vrfAlpha, output: vrfOutput, seed: vrfSeed }}
+                  endpoint="/oracle/vrf/reveal"
+                  method="POST"
+                  body={{ request_id: vrfRequestId }}
+                  title="raw proof / curl"
+                />
               </div>
             )}
           </div>
@@ -263,15 +286,22 @@ export const QuantumOracle = () => {
             </button>
 
             {verifyResult !== null && (
-              <div className="space-y-2 pt-2 border-t border-slate-700/30">
+              <div className="space-y-2 pt-2 border-t border-[rgb(var(--border))]">
                 <div className="flex items-center gap-3">
                   <Badge label={verifyResult.valid ? 'Valid' : 'Invalid'} />
-                  <span className="text-base text-slate-200">
-                    {verifyResult.valid ? 'VRF proof is valid' : 'VRF proof verification failed'}
+                  <span className="text-sm text-[rgb(var(--fg))] font-mono">
+                    {verifyResult.valid ? 'VRF proof valid ✓' : 'VRF proof invalid ✗'}
                   </span>
                 </div>
                 <KVRow label="Commitment check" value={verifyResult.commitment_valid ? 'Pass' : 'Fail'} />
                 <KVRow label="Output check" value={verifyResult.output_valid ? 'Pass' : 'Fail'} />
+                <RawView
+                  data={verifyResult}
+                  endpoint="/oracle/vrf/verify"
+                  method="POST"
+                  body={{ commitment: verifyCommitment, alpha: verifyAlpha, output: verifyOutput, seed: verifySeed }}
+                  title="raw verdict / curl"
+                />
               </div>
             )}
           </div>

@@ -8,6 +8,10 @@ import type {
   GenerateKeyResponse,
   GeneratePasswordResponse,
   GeneratePqcResponse,
+  KemKeypairResponse,
+  KemEncapsulateResponse,
+  KemDecapsulateResponse,
+  HybridKemKeypairResponse,
   GenerateUuidResponse,
   HardwareDevicesResponse,
   HashResponse,
@@ -344,3 +348,33 @@ export const requestBatchQuantumRandomness = (request: {
   target_chain?: string;
 }): Promise<ApiResponse<BatchOracleRequestItem[]>> =>
   requestJson('/oracle/requests/batch', { method: 'POST', body: JSON.stringify(request) });
+
+// KEM API (Kyber Key Encapsulation Mechanism)
+export const kemGenerate = (
+  algorithm: 'KYBER512' | 'KYBER768' | 'KYBER1024',
+  format: 'base64' | 'hex',
+): Promise<ApiResponse<KemKeypairResponse>> =>
+  requestForm('/pqc/kem/generate', { algorithm, format });
+
+export const kemEncapsulate = (payload: {
+  public_key: string;
+  algorithm: 'KYBER512' | 'KYBER768' | 'KYBER1024';
+  encoding: 'base64' | 'hex';
+}): Promise<ApiResponse<KemEncapsulateResponse>> =>
+  requestForm('/pqc/kem/encapsulate', payload);
+
+export const kemDecapsulate = (payload: {
+  ciphertext: string;
+  private_key: string;
+  algorithm: 'KYBER512' | 'KYBER768' | 'KYBER1024';
+  encoding: 'base64' | 'hex';
+}): Promise<ApiResponse<KemDecapsulateResponse>> =>
+  requestForm('/pqc/kem/decapsulate', payload);
+
+// Hybrid KEM (KEM + signature scheme combined)
+export const generateHybridKemKeypair = (payload: {
+  kem_algorithm: string;
+  sig_algorithm: string;
+  format: 'base64' | 'hex';
+}): Promise<ApiResponse<HybridKemKeypairResponse>> =>
+  requestForm('/pqc/hybrid/generate', payload);

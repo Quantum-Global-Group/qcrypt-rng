@@ -1,0 +1,15 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python -m uvicorn app.main:app --host 127.0.0.1 --port 8000 --log-level info)",
+      "Bash(npm run *)",
+      "Bash(py --version)",
+      "Bash(npm --version)",
+      "Bash(cmd //c \"node --version && npm --version\")",
+      "Bash(cmd //c \"where node\")",
+      "Bash(cmd //c \"where python\")",
+      "mcp__Claude_in_Chrome__tabs_context_mcp",
+      "Bash(cmd //c \"where node 2>nul || echo notfound\")"
+    ]
+  }
+}

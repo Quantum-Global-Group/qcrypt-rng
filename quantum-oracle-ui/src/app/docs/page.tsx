@@ -1,77 +1,124 @@
 import Link from 'next/link';
 
 export const metadata = {
-  title: 'QCrypt RNG - Documentation',
-  description: 'Documentation for the QCrypt RNG quantum security platform',
+  title: 'qcrypt-rng // docs',
+  description: 'Endpoint reference for the QCrypt RNG quantum randomness oracle.',
 };
 
+/* ── Section wrapper — phosphor header with // comment prefix ─────────── */
 const S = ({ title, children }: { title: string; children: React.ReactNode }) => (
   <section className="space-y-4">
-    <h2 className="text-xl font-bold text-white border-b border-slate-700/50 pb-2">{title}</h2>
+    <h2 className="text-sm font-mono uppercase tracking-[0.2em] text-[rgb(var(--green))] border-b border-[rgb(var(--border))] pb-2 flex items-center gap-2">
+      <span className="text-[rgb(var(--fg-dim))]">{'//'}</span>
+      <span>{title}</span>
+    </h2>
     {children}
   </section>
 );
 
-const F = ({ name, endpoint, desc }: { name: string; endpoint: string; desc: string }) => (
-  <div className="py-3 border-b border-slate-700/25 last:border-0">
-    <div className="flex items-baseline gap-3 flex-wrap">
-      <span className="text-base font-semibold text-white">{name}</span>
-      <code className="text-xs font-mono text-indigo-400">{endpoint}</code>
+/* ── Endpoint row — METHOD /path + description ────────────────────────── */
+const F = ({
+  name,
+  endpoint,
+  desc,
+}: {
+  name: string;
+  endpoint: string;
+  desc: string;
+}) => {
+  const match = /^(\w+)\s+(.+)$/.exec(endpoint);
+  const method = match?.[1] ?? 'POST';
+  const path = match?.[2] ?? endpoint;
+  const methodTone =
+    method === 'GET' ? 'text-[rgb(var(--cyan))]' : 'text-[rgb(var(--green))]';
+  return (
+    <div className="py-3 border-b border-[rgb(var(--border))]/50 last:border-0 font-mono">
+      <div className="flex items-baseline gap-3 flex-wrap">
+        <span className="text-sm text-[rgb(var(--fg))]">{name}</span>
+        <code className="text-xs">
+          <span className={`${methodTone} uppercase font-semibold mr-1.5`}>{method}</span>
+          <span className="text-[rgb(var(--fg-dim))]">{path}</span>
+        </code>
+      </div>
+      <p className="text-xs text-[rgb(var(--fg-dim))] mt-1 leading-relaxed">{desc}</p>
     </div>
-    <p className="text-sm text-slate-400 mt-1">{desc}</p>
-  </div>
-);
+  );
+};
 
 export default function DocsPage() {
+  const tabs = [
+    ['Blockchain Security', 'quantum-safe wallets, VRF proofs, chain-aware randomness'],
+    ['Data Protection', 'encryption, signing, hashing, post-quantum crypto'],
+    ['Key & Entropy Tools', 'bytes, keys, tokens, UUIDs, passwords, batch ops'],
+    ['Threat Intelligence', 'algorithm vulnerability scanning + attack sim'],
+    ['Network Status', 'health, entropy quality, hardware, oracle monitoring'],
+  ];
+
   return (
-    <div className="min-h-screen text-white">
-      <header className="border-b border-slate-700/50">
-        <div className="max-w-5xl mx-auto px-6 py-5">
-          <div className="flex items-center justify-between">
-            <div>
-              <Link href="/" className="text-xl font-bold tracking-wide text-white hover:text-slate-200 transition-colors">
-                QCrypt RNG
-              </Link>
-              <p className="text-slate-400 text-sm mt-0.5">Documentation</p>
+    <div className="min-h-screen text-[rgb(var(--fg))] relative pb-10">
+      {/* ── Header ─────────────────────────────────────────────────── */}
+      <header className="border-b border-[rgb(var(--border))] relative z-10">
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 py-4">
+          <div className="flex items-center justify-between gap-4">
+            <div className="min-w-0 font-mono">
+              <div className="flex items-baseline gap-2">
+                <span className="text-[rgb(var(--green))] select-none">$</span>
+                <Link
+                  href="/"
+                  className="text-base sm:text-lg font-semibold text-[rgb(230,255,238)] hover:text-[rgb(var(--green))] transition-colors"
+                >
+                  qcrypt-rng
+                </Link>
+                <span className="text-[rgb(var(--fg-dim))] text-xs sm:text-sm">
+                  / docs · endpoint reference
+                </span>
+                <span className="text-[rgb(var(--green))] caret ml-0.5" aria-hidden />
+              </div>
+              <div className="mt-1 text-[10px] tracking-[0.15em] uppercase text-[rgb(var(--fg-dim))]">
+                api/v2 · auto-discovery 8000-8004 · override NEXT_PUBLIC_API_BASE_URL
+              </div>
             </div>
-            <Link href="/" className="btn-secondary">Back to Dashboard</Link>
+            <Link href="/" className="btn-ghost">
+              ← back
+            </Link>
           </div>
         </div>
       </header>
 
-      <main className="max-w-5xl mx-auto px-6 py-8 space-y-10">
+      <main className="max-w-5xl mx-auto px-4 sm:px-6 py-8 space-y-10 relative z-10">
         {/* Getting Started */}
-        <S title="Getting Started">
-          <p className="text-sm text-slate-300 leading-relaxed">
-            QCrypt RNG is a quantum-enhanced security platform that provides cryptographically secure randomness, post-quantum cryptography, blockchain security tools, and a verifiable random function (VRF) oracle. The dashboard organizes features into five tabs.
+        <S title="getting started">
+          <p className="text-sm text-[rgb(var(--fg))] leading-relaxed font-mono">
+            qcrypt-rng is a quantum-enhanced security platform providing
+            cryptographically secure randomness, post-quantum cryptography,
+            blockchain security tools, and a verifiable random function (VRF)
+            oracle. The dashboard organises features into five tabs.
           </p>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 pt-2">
-            {[
-              ['Blockchain Security', 'Quantum-safe wallets, VRF proofs, and chain-aware randomness'],
-              ['Data Protection', 'Encryption, signing, hashing, and post-quantum cryptography'],
-              ['Key and Entropy Tools', 'Random bytes, keys, tokens, UUIDs, passwords, and batch operations'],
-              ['Threat Intelligence', 'Algorithm vulnerability scanning, attack simulation, and benchmarks'],
-              ['Network Status', 'Platform health, entropy quality, hardware status, and oracle monitoring'],
-            ].map(([title, desc]) => (
-              <div key={title} className="section space-y-1">
-                <span className="text-sm font-semibold text-white">{title}</span>
-                <p className="text-xs text-slate-400">{desc}</p>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 pt-2">
+            {tabs.map(([title, desc]) => (
+              <div key={title} className="section p-3">
+                <div className="text-xs font-mono uppercase tracking-wider text-[rgb(var(--green))]">
+                  {title}
+                </div>
+                <p className="text-[11px] text-[rgb(var(--fg-dim))] mt-1 leading-relaxed font-mono">
+                  {desc}
+                </p>
               </div>
             ))}
           </div>
         </S>
 
         {/* Blockchain Security */}
-        <S title="Blockchain Security">
+        <S title="blockchain security">
           <F name="Create Wallet Profiles" endpoint="POST /blockchain/create-wallet" desc="Generate and compare classical (ECDSA) vs quantum-safe (DILITHIUM/KYBER) blockchain wallets." />
-          <F name="Quantum VRF - Create Seed" endpoint="POST /oracle/vrf/seed" desc="Generate a quantum random seed and publish a Keccak-256 commitment for verifiable randomness." />
-          <F name="Quantum VRF - Prove" endpoint="POST /oracle/vrf/prove" desc="Compute a deterministic VRF output for a given input (alpha) using the quantum seed." />
-          <F name="Quantum VRF - Reveal" endpoint="POST /oracle/vrf/reveal" desc="Reveal the quantum seed so third parties can independently verify VRF proofs." />
-          <F name="Quantum VRF - Verify" endpoint="POST /oracle/vrf/verify" desc="Verify a VRF proof by checking commitment == H(seed) and output == H(seed || alpha)." />
+          <F name="Quantum VRF — Create Seed" endpoint="POST /oracle/vrf/seed" desc="Generate a quantum random seed and publish a Keccak-256 commitment for verifiable randomness." />
+          <F name="Quantum VRF — Prove" endpoint="POST /oracle/vrf/prove" desc="Compute a deterministic VRF output for a given input (alpha) using the quantum seed." />
+          <F name="Quantum VRF — Reveal" endpoint="POST /oracle/vrf/reveal" desc="Reveal the quantum seed so third parties can independently verify VRF proofs." />
+          <F name="Quantum VRF — Verify" endpoint="POST /oracle/vrf/verify" desc="Verify a VRF proof by checking commitment == H(seed) and output == H(seed || alpha)." />
         </S>
 
         {/* Data Protection */}
-        <S title="Data Protection">
+        <S title="data protection">
           <F name="Encrypt / Decrypt" endpoint="POST /protect/encrypt, /decrypt" desc="AES encryption (256-GCM, 128-GCM, 256-CBC) with quantum-generated or custom keys. Supports text and file encryption up to 10 MB." />
           <F name="File Encrypt / Decrypt" endpoint="POST /protect/encrypt-file, /decrypt-file" desc="Upload files for quantum-key encryption. Returns encrypted payload with original filename preserved." />
           <F name="Sign / Verify" endpoint="POST /protect/sign, /verify" desc="HMAC-SHA256 and HMAC-SHA512 signatures with quantum-random keys for message authentication." />
@@ -80,8 +127,8 @@ export default function DocsPage() {
           <F name="PQC Sign / Verify" endpoint="POST /pqc/sign, /verify" desc="Post-quantum digital signatures using DILITHIUM. Resistant to quantum computer attacks." />
         </S>
 
-        {/* Key and Entropy Tools */}
-        <S title="Key and Entropy Tools">
+        {/* Key & Entropy Tools */}
+        <S title="key & entropy tools">
           <F name="Request Randomness" endpoint="POST /oracle/request" desc="Request quantum randomness for smart contracts with commit-reveal scheme and optional target chain." />
           <F name="Random Bytes" endpoint="POST /generate/bytes" desc="Raw quantum random bytes in hex, base64, or array format with configurable qubit count." />
           <F name="Cryptographic Keys" endpoint="POST /generate/key" desc="AES, RSA, or ECDSA keys with quantum entropy. Output in Base64, Hex, or PEM format." />
@@ -93,7 +140,7 @@ export default function DocsPage() {
         </S>
 
         {/* Threat Intelligence */}
-        <S title="Threat Intelligence">
+        <S title="threat intelligence">
           <F name="Threat Scanner" endpoint="POST /pqc/threat-assessment" desc="Assess quantum vulnerability of algorithms (RSA, ECDSA, KYBER). Shows risk level, qubits to break, and recommendations." />
           <F name="Oracle Benchmark" endpoint="GET /oracle/benchmark" desc="Measure generation throughput, commitment latency, and entropy quality of the quantum oracle." />
           <F name="Simulate Quantum Attack" endpoint="POST /blockchain/simulate-attack" desc="Simulate Shor's algorithm on RSA-2048, ECDSA-256, DILITHIUM3, or KYBER768." />
@@ -102,7 +149,7 @@ export default function DocsPage() {
         </S>
 
         {/* Network Status */}
-        <S title="Network Status">
+        <S title="network status">
           <F name="Platform Health" endpoint="GET /health" desc="API status, backend health, generation count, and average latency. Auto-refreshes every 15 seconds." />
           <F name="Oracle Network Info" endpoint="GET /oracle/network-info" desc="Node count, active requests, uptime, quantum hardware, entropy quality, and supported chains." />
           <F name="Quantum Entropy" endpoint="GET /quantum/entropy" desc="Detailed entropy analysis: Shannon entropy, min entropy, chi-square, autocorrelation, bit balance." />
@@ -113,61 +160,86 @@ export default function DocsPage() {
         </S>
 
         {/* API Quick Reference */}
-        <S title="API Quick Reference">
-          <p className="text-sm text-slate-300 leading-relaxed">
-            All API endpoints are served under <code className="text-xs font-mono text-indigo-400">/api/v2</code>. The server auto-discovers on ports 8000-8004. Set <code className="text-xs font-mono text-indigo-400">NEXT_PUBLIC_API_BASE_URL</code> to override.
+        <S title="api quick reference">
+          <p className="text-xs text-[rgb(var(--fg-dim))] leading-relaxed font-mono">
+            All API endpoints are served under{' '}
+            <code className="text-[rgb(var(--green))]">/api/v2</code>. The server
+            auto-discovers on ports{' '}
+            <code className="text-[rgb(var(--green))]">8000-8004</code>. Set{' '}
+            <code className="text-[rgb(var(--green))]">NEXT_PUBLIC_API_BASE_URL</code>{' '}
+            to override.
           </p>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 pt-2">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 pt-2 font-mono">
             {[
-              ['POST /generate/bytes', 'Random bytes'],
-              ['POST /generate/key', 'Crypto keys'],
-              ['POST /generate/uuid', 'UUIDs'],
-              ['POST /generate/password', 'Passwords'],
-              ['POST /generate/token', 'Session tokens'],
-              ['POST /generate/batch', 'Batch random'],
-              ['POST /protect/encrypt', 'Encrypt text'],
-              ['POST /protect/decrypt', 'Decrypt text'],
-              ['POST /protect/encrypt-file', 'Encrypt file'],
-              ['POST /protect/decrypt-file', 'Decrypt file'],
-              ['POST /protect/sign', 'HMAC sign'],
-              ['POST /protect/verify', 'HMAC verify'],
-              ['POST /protect/hash', 'Hash data'],
-              ['POST /pqc/generate', 'PQC key gen'],
-              ['POST /pqc/sign', 'PQC sign'],
-              ['POST /pqc/verify', 'PQC verify'],
-              ['GET /pqc/algorithms', 'List PQC algos'],
-              ['POST /pqc/threat-assessment', 'Threat assess'],
-              ['POST /oracle/request', 'Oracle request'],
-              ['POST /oracle/requests/batch', 'Batch oracle'],
-              ['GET /oracle/status/:id', 'Request status'],
-              ['GET /oracle/network-info', 'Network info'],
-              ['GET /oracle/benchmark', 'Benchmark'],
-              ['POST /oracle/vrf/seed', 'VRF seed'],
-              ['POST /oracle/vrf/prove', 'VRF prove'],
-              ['POST /oracle/vrf/reveal', 'VRF reveal'],
-              ['POST /oracle/vrf/verify', 'VRF verify'],
-              ['POST /blockchain/create-wallet', 'Wallets'],
-              ['POST /blockchain/simulate-attack', 'Attack sim'],
-              ['GET /blockchain/compare-blockchains', 'Compare'],
-              ['POST /blockchain/mine-block', 'Mine block'],
-              ['GET /quantum/entropy', 'Entropy'],
-              ['GET /quantum/stats', 'Stats'],
-              ['POST /quantum/reseed', 'Reseed'],
-              ['GET /hardware/devices', 'Hardware'],
-              ['GET /health', 'Health check'],
-            ].map(([ep, label]) => (
-              <div key={ep} className="flex items-baseline gap-3 py-1.5 border-b border-slate-700/20">
-                <code className="text-xs font-mono text-slate-300 shrink-0 w-56">{ep}</code>
-                <span className="text-xs text-slate-500">{label}</span>
-              </div>
-            ))}
+              ['POST /generate/bytes', 'random bytes'],
+              ['POST /generate/key', 'crypto keys'],
+              ['POST /generate/uuid', 'uuids'],
+              ['POST /generate/password', 'passwords'],
+              ['POST /generate/token', 'session tokens'],
+              ['POST /generate/batch', 'batch random'],
+              ['POST /protect/encrypt', 'encrypt text'],
+              ['POST /protect/decrypt', 'decrypt text'],
+              ['POST /protect/encrypt-file', 'encrypt file'],
+              ['POST /protect/decrypt-file', 'decrypt file'],
+              ['POST /protect/sign', 'hmac sign'],
+              ['POST /protect/verify', 'hmac verify'],
+              ['POST /protect/hash', 'hash data'],
+              ['POST /pqc/generate', 'pqc key gen'],
+              ['POST /pqc/sign', 'pqc sign'],
+              ['POST /pqc/verify', 'pqc verify'],
+              ['GET /pqc/algorithms', 'list pqc algos'],
+              ['POST /pqc/threat-assessment', 'threat assess'],
+              ['POST /oracle/request', 'oracle request'],
+              ['POST /oracle/requests/batch', 'batch oracle'],
+              ['GET /oracle/status/:id', 'request status'],
+              ['GET /oracle/network-info', 'network info'],
+              ['GET /oracle/benchmark', 'benchmark'],
+              ['POST /oracle/vrf/seed', 'vrf seed'],
+              ['POST /oracle/vrf/prove', 'vrf prove'],
+              ['POST /oracle/vrf/reveal', 'vrf reveal'],
+              ['POST /oracle/vrf/verify', 'vrf verify'],
+              ['POST /blockchain/create-wallet', 'wallets'],
+              ['POST /blockchain/simulate-attack', 'attack sim'],
+              ['GET /blockchain/compare-blockchains', 'compare'],
+              ['POST /blockchain/mine-block', 'mine block'],
+              ['GET /quantum/entropy', 'entropy'],
+              ['GET /quantum/stats', 'stats'],
+              ['POST /quantum/reseed', 'reseed'],
+              ['GET /hardware/devices', 'hardware'],
+              ['GET /health', 'health check'],
+            ].map(([ep, label]) => {
+              const m = /^(\w+)\s+(.+)$/.exec(ep);
+              const method = m?.[1] ?? 'POST';
+              const path = m?.[2] ?? ep;
+              const tone =
+                method === 'GET'
+                  ? 'text-[rgb(var(--cyan))]'
+                  : 'text-[rgb(var(--green))]';
+              return (
+                <div
+                  key={ep}
+                  className="flex items-baseline gap-2 py-1.5 border-b border-[rgb(var(--border))]/40"
+                >
+                  <code className="text-[11px] shrink-0 w-60">
+                    <span className={`${tone} uppercase font-semibold mr-1`}>{method}</span>
+                    <span className="text-[rgb(var(--fg))]">{path}</span>
+                  </code>
+                  <span className="text-[11px] text-[rgb(var(--fg-dim))] uppercase tracking-wider">
+                    {label}
+                  </span>
+                </div>
+              );
+            })}
           </div>
         </S>
       </main>
 
-      <footer className="border-t border-slate-700/50 mt-12 py-6">
-        <div className="max-w-5xl mx-auto px-6 text-center text-slate-500 text-sm">
-          QCrypt RNG v2.0
+      <footer className="border-t border-[rgb(var(--border))] mt-12 py-5 relative z-10">
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 flex items-center justify-between text-[11px] uppercase tracking-wider text-[rgb(var(--fg-dim))] font-mono">
+          <span>qcrypt-rng // v2.0 · docs</span>
+          <Link href="/" className="hover:text-[rgb(var(--green))] transition-colors">
+            return to dashboard ›
+          </Link>
         </div>
       </footer>
     </div>

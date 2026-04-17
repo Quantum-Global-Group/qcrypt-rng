@@ -39,11 +39,16 @@ export const MonoValue = ({
 
   return (
     <div className="space-y-1.5">
-      {label && <div className="text-sm text-slate-400">{label}</div>}
+      {label && (
+        <div className="text-[11px] uppercase tracking-[0.12em] text-[rgb(var(--fg-dim))] font-mono">
+          {label}
+        </div>
+      )}
       <div className="code-block flex items-start gap-3">
         <code
-          className="flex-1 text-sm font-mono text-slate-200 break-all leading-relaxed select-all whitespace-pre-wrap"
+          className="flex-1 text-sm font-mono text-[rgb(var(--green))] break-all leading-relaxed select-all whitespace-pre-wrap"
           onClick={() => long && setExpanded((p) => !p)}
+          title={long ? (expanded ? 'Click to collapse' : 'Click to expand') : undefined}
         >
           {display}
         </code>
@@ -63,10 +68,10 @@ export const KVRow = ({
   value: ReactNode;
   mono?: boolean;
 }) => (
-  <div className="flex items-baseline justify-between gap-4 py-2 border-b border-slate-700/25 last:border-0">
-    <span className="text-sm text-slate-400 shrink-0">{label}</span>
+  <div className="flex items-baseline justify-between gap-4 py-1.5 border-b border-[rgb(var(--border))]/60 last:border-0 font-mono text-sm">
+    <span className="text-[rgb(var(--fg-dim))] shrink-0 text-xs uppercase tracking-[0.1em]">{label}</span>
     <span
-      className={`text-base text-right ${mono ? 'font-mono text-slate-200 break-all' : 'text-slate-100'}`}
+      className={`text-right ${mono ? 'text-[rgb(var(--green))] break-all' : 'text-[rgb(var(--fg))]'}`}
     >
       {value ?? '-'}
     </span>
@@ -86,10 +91,10 @@ export const DataRows = ({ data }: { data: Record<string, unknown> }) => {
         if (val && typeof val === 'object' && !Array.isArray(val)) {
           return (
             <div key={key} className="py-2">
-              <div className="text-sm text-slate-400 font-medium mb-1">
+              <div className="text-[11px] uppercase tracking-[0.12em] text-[rgb(var(--fg-dim))] font-mono mb-1">
                 {fmt(key)}
               </div>
-              <div className="pl-3 border-l border-slate-700/30">
+              <div className="pl-3 border-l border-[rgb(var(--border))]/70">
                 <DataRows data={val as Record<string, unknown>} />
               </div>
             </div>
@@ -170,19 +175,24 @@ export const InfoPopover = ({
         tabIndex={0}
         onClick={(e) => { e.stopPropagation(); setOpen((p) => !p); }}
         onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.stopPropagation(); setOpen((p) => !p); } }}
-        className="w-5 h-5 rounded-full border border-slate-600 text-slate-400 hover:text-white hover:border-slate-400 text-xs leading-none inline-flex items-center justify-center transition-colors shrink-0 cursor-pointer select-none"
+        className="w-5 h-5 rounded-full border border-[rgb(var(--border))] text-[rgb(var(--fg-dim))] hover:text-[rgb(var(--green))] hover:border-[rgb(var(--green))] text-xs leading-none inline-flex items-center justify-center transition-colors shrink-0 cursor-pointer select-none font-mono"
         aria-label={`Info: ${title}`}
       >
-        i
+        ?
       </span>
       {open && (
-        <div className="absolute left-0 top-7 z-50 w-72 rounded-lg border border-slate-700 bg-[rgb(16,20,30)] shadow-xl p-4 space-y-2">
-          <div className="text-sm font-semibold text-white">{title}</div>
-          <p className="text-xs text-slate-300 leading-relaxed">{description}</p>
+        <div className="absolute left-0 top-7 z-50 w-72 rounded-[3px] border border-[rgb(var(--green))] bg-[rgb(var(--bg-raised))] shadow-[0_0_20px_rgba(0,255,156,0.15)] p-4 space-y-2 font-mono">
+          <div className="text-sm font-semibold text-[rgb(var(--green))]">
+            <span className="opacity-60">{'// '}</span>{title}
+          </div>
+          <p className="text-xs text-[rgb(var(--fg))] leading-relaxed">{description}</p>
           {useCases && useCases.length > 0 && (
-            <ul className="text-xs text-slate-400 space-y-1 list-disc list-inside pt-1">
+            <ul className="text-xs text-[rgb(var(--fg-dim))] space-y-1 pt-1">
               {useCases.map((uc, i) => (
-                <li key={i}>{uc}</li>
+                <li key={i} className="flex gap-2">
+                  <span className="text-[rgb(var(--green))] shrink-0">›</span>
+                  <span>{uc}</span>
+                </li>
               ))}
             </ul>
           )}

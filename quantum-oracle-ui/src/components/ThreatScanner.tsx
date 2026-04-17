@@ -37,8 +37,8 @@ const CollapsibleSection = ({
     <div className="section">
       <div className="flex items-center justify-between gap-3">
         <button onClick={() => setOpen((p) => !p)} className="flex items-center gap-2 text-left flex-1 min-w-0">
-          <span className="text-slate-500 text-xs shrink-0">{open ? '\u25BC' : '\u25B6'}</span>
-          <h2 className="text-lg font-bold text-white truncate">{title}</h2>
+          <span className="text-[rgb(var(--green))] font-mono text-xs shrink-0">{open ? '▼' : '▶'}</span>
+          <h2 className="text-sm font-mono font-semibold uppercase tracking-[0.15em] text-[rgb(var(--green))] truncate">{title}</h2>
         </button>
         {actions && <div className="flex gap-2 shrink-0">{actions}</div>}
       </div>
@@ -174,7 +174,7 @@ export const ThreatScanner = () => {
 
       {/* ── Threat Scanner (always open) ──────────────────────── */}
       <div className="section space-y-4">
-        <h2 className="text-lg font-bold text-white flex items-center gap-2">Threat Scanner <InfoPopover title="Threat Scanner" description="Assess the quantum vulnerability of cryptographic algorithms in your stack. Select algorithms to scan, see risk levels, and generate quantum-safe replacements." useCases={['Audit cryptographic algorithm security', 'Plan quantum migration strategy', 'Generate PQC replacement keys']} /></h2>
+        <h2 className="text-sm font-mono font-semibold uppercase tracking-[0.15em] text-[rgb(var(--green))] flex items-center gap-2">Threat Scanner <InfoPopover title="Threat Scanner" description="Assess the quantum vulnerability of cryptographic algorithms in your stack. Select algorithms to scan, see risk levels, and generate quantum-safe replacements." useCases={['Audit cryptographic algorithm security', 'Plan quantum migration strategy', 'Generate PQC replacement keys']} /></h2>
         <p className="text-sm text-slate-400">Select the algorithms in your stack to scan for quantum vulnerability.</p>
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-2">
           {ALGORITHMS.map((algo) => {
@@ -205,17 +205,17 @@ export const ThreatScanner = () => {
           <div className="flex items-center justify-between gap-4 flex-wrap">
             <div className="flex items-center gap-6">
               <div>
-                <div className="text-2xl font-bold text-white">{summary.high}</div>
+                <div className="text-2xl font-mono font-bold text-[rgb(var(--green))]">{summary.high}</div>
                 <div className="text-sm text-slate-400">High / Critical</div>
               </div>
               <div className="w-px h-10 bg-slate-700/40" />
               <div>
-                <div className="text-2xl font-bold text-white">{summary.secure}</div>
+                <div className="text-2xl font-mono font-bold text-[rgb(var(--green))]">{summary.secure}</div>
                 <div className="text-sm text-slate-400">Quantum Safe</div>
               </div>
               <div className="w-px h-10 bg-slate-700/40" />
               <div>
-                <div className="text-2xl font-bold text-white">{summary.total}</div>
+                <div className="text-2xl font-mono font-bold text-[rgb(var(--green))]">{summary.total}</div>
                 <div className="text-sm text-slate-400">Scanned</div>
               </div>
             </div>
@@ -235,7 +235,7 @@ export const ThreatScanner = () => {
             <div key={row.algorithm} className="section space-y-3">
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <div className="flex items-center gap-3">
-                  <span className="text-base font-bold text-white">{row.algorithm}</span>
+                  <span className="text-sm font-mono font-bold text-[rgb(var(--green))] uppercase tracking-wider">{row.algorithm}</span>
                   <Badge label={row.risk_level} />
                   <Badge label={row.status} />
                 </div>

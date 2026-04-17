@@ -27,8 +27,8 @@ const Collapsible = ({
     <div className="section">
       <div className="flex items-center justify-between gap-3">
         <button onClick={() => setOpen((p) => !p)} className="flex items-center gap-2 text-left flex-1 min-w-0">
-          <span className="text-slate-500 text-xs shrink-0">{open ? '\u25BC' : '\u25B6'}</span>
-          <h3 className="text-lg font-bold text-white truncate">{title}</h3>
+          <span className="text-[rgb(var(--green))] font-mono text-xs shrink-0">{open ? '▼' : '▶'}</span>
+          <h3 className="text-sm font-mono font-semibold uppercase tracking-[0.15em] text-[rgb(var(--green))] truncate">{title}</h3>
         </button>
         {actions && <div className="flex gap-2 shrink-0">{actions}</div>}
       </div>
@@ -128,7 +128,7 @@ export const NetworkStatus = () => {
       {/* Platform Health (always open) */}
       <div className="section space-y-4">
         <div className="flex items-center justify-between flex-wrap gap-2">
-          <h2 className="text-lg font-bold text-white flex items-center gap-2">Platform Health <InfoPopover title="Platform Health" description="Real-time health status of the API and quantum backend with auto-refresh every 15 seconds. Shows generation count and average latency." useCases={['Monitor system uptime', 'Track generation performance', 'Verify backend connectivity']} /></h2>
+          <h2 className="text-sm font-mono font-semibold uppercase tracking-[0.15em] text-[rgb(var(--green))] flex items-center gap-2">Platform Health <InfoPopover title="Platform Health" description="Real-time health status of the API and quantum backend with auto-refresh every 15 seconds. Shows generation count and average latency." useCases={['Monitor system uptime', 'Track generation performance', 'Verify backend connectivity']} /></h2>
           <div className="flex items-center gap-3 flex-wrap">
             <div className="flex items-center gap-1.5">
               <div className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
@@ -172,7 +172,7 @@ export const NetworkStatus = () => {
       {/* Oracle Network + Entropy Quality (always open) */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div className="section space-y-2">
-          <h3 className="text-lg font-bold text-white mb-3 flex items-center gap-2">Oracle Network <InfoPopover title="Oracle Network" description="Oracle node count, active randomness requests, and network uptime metrics for the quantum randomness oracle infrastructure." useCases={['Monitor oracle availability', 'Track active requests', 'Verify network health']} /></h3>
+          <h3 className="text-sm font-mono font-semibold uppercase tracking-[0.15em] text-[rgb(var(--green))] mb-3 flex items-center gap-2">Oracle Network <InfoPopover title="Oracle Network" description="Oracle node count, active randomness requests, and network uptime metrics for the quantum randomness oracle infrastructure." useCases={['Monitor oracle availability', 'Track active requests', 'Verify network health']} /></h3>
           <KVRow label="Name" value={network?.network.name ?? '-'} />
           <KVRow label="Status" value={<Badge label={network?.network.status ?? '-'} />} />
           <KVRow label="Nodes" value={network?.network.nodes_count ?? '-'} />
@@ -183,7 +183,7 @@ export const NetworkStatus = () => {
         </div>
 
         <div className="section space-y-2">
-          <h3 className="text-lg font-bold text-white mb-3 flex items-center gap-2">Entropy Quality <InfoPopover title="Entropy Quality" description="Shannon and min entropy measurements from the quantum random source. Higher values indicate better randomness quality. Health status summarizes overall entropy pool condition." useCases={['Verify randomness quality', 'Monitor entropy pool health', 'Compliance auditing']} /></h3>
+          <h3 className="text-sm font-mono font-semibold uppercase tracking-[0.15em] text-[rgb(var(--green))] mb-3 flex items-center gap-2">Entropy Quality <InfoPopover title="Entropy Quality" description="Shannon and min entropy measurements from the quantum random source. Higher values indicate better randomness quality. Health status summarizes overall entropy pool condition." useCases={['Verify randomness quality', 'Monitor entropy pool health', 'Compliance auditing']} /></h3>
           <KVRow label="Shannon Entropy" value={network?.performance.entropy_quality.shannon_entropy.toFixed?.(4) ?? '-'} mono />
           <KVRow label="Min Entropy" value={network?.performance.entropy_quality.min_entropy.toFixed?.(4) ?? '-'} mono />
           <KVRow label="Health" value={<Badge label={network?.performance.entropy_quality.health_status ?? '-'} />} />
@@ -301,7 +301,7 @@ export const NetworkStatus = () => {
 
       {/* Oracle Request Status (always open) */}
       <div className="section space-y-4">
-        <h2 className="text-lg font-bold text-white flex items-center gap-2">Oracle Request Status <InfoPopover title="Oracle Request Status" description="Look up the fulfillment status of a quantum randomness request by ID. Shows commitment, randomness value (when fulfilled), block number, and entropy bits." useCases={['Track request fulfillment', 'Verify delivered randomness', 'Debug oracle requests']} /></h2>
+        <h2 className="text-sm font-mono font-semibold uppercase tracking-[0.15em] text-[rgb(var(--green))] flex items-center gap-2">Oracle Request Status <InfoPopover title="Oracle Request Status" description="Look up the fulfillment status of a quantum randomness request by ID. Shows commitment, randomness value (when fulfilled), block number, and entropy bits." useCases={['Track request fulfillment', 'Verify delivered randomness', 'Debug oracle requests']} /></h2>
         <p className="text-sm text-slate-400">Check the status of a quantum randomness request by ID. The oracle uses a commit-reveal scheme so randomness is verifiable and cannot be manipulated before delivery.</p>
         <div className="flex gap-3 flex-wrap items-end">
           <div className="flex-1 min-w-[200px]">

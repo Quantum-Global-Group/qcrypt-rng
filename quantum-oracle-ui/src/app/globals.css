@@ -1,146 +1,575 @@
 @import "tailwindcss";
 
+/* ─────────────────────────────────────────────────────────────────────
+   QCrypt RNG — Terminal / Cypherpunk theme
+   Phosphor green on near-black. Mono-first typography. Sharp corners.
+   Drive-by style for analysts, hackers, and decentralized-tech users.
+   ───────────────────────────────────────────────────────────────────── */
+
+/* Font family utilities tied to CSS variables set by next/font */
+.font-sans  { font-family: var(--font-sans, ui-sans-serif, system-ui, sans-serif); }
+.font-mono  { font-family: var(--font-mono, ui-monospace, monospace); }
+.font-serif { font-family: var(--font-serif, ui-serif, Georgia, serif); }
+
 :root {
-  --fg: 226 232 240;
-  --bg: 8 12 20;
-  --border: 85 100 120;
-  --muted: 148 163 184;
-  --accent: 130 150 175;
-  --ok: 22 163 74;
-  --warn: 202 138 4;
-  --critical: 220 38 38;
+  /* Base canvas: near-black with a slight cool tint, so true white pops */
+  --bg:        6 10 8;       /* almost pure black, sub-1% green tint */
+  --bg-raised: 10 16 12;
+  --bg-sunken: 3 6 5;
+  --fg:        200 240 210;  /* phosphor-cream */
+  --fg-dim:    130 170 140;
+
+  /* Grid + borders */
+  --border:        36 90 56;
+  --border-strong: 60 140 90;
+  --grid:          20 50 32;
+
+  /* Accent palette */
+  --green:    0 255 156;     /* primary phosphor */
+  --green-2:  0 200 120;
+  --amber:    255 184 0;
+  --red:      255 72 72;
+  --cyan:     0 220 255;
+  --magenta:  255 92 200;
+
+  /* Semantic */
+  --muted:    var(--fg-dim);
+  --accent:   var(--green);
+  --ok:       var(--green);
+  --warn:     var(--amber);
+  --critical: var(--red);
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  background: rgb(var(--bg));
+  color: rgb(var(--fg));
 }
 
 body {
-  color: rgb(var(--fg));
-  background: rgb(var(--bg));
-  font-feature-settings: "tnum" 1, "ss01" 1;
+  font-family: var(--font-mono, ui-monospace, SFMono-Regular, Menlo, monospace);
+  font-feature-settings: "tnum" 1, "ss01" 1, "calt" 0;
+  font-size: 14px;
+  line-height: 1.55;
+  letter-spacing: 0.005em;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+
+  /* Faint scanline + grid backdrop */
+  background-image:
+    /* scanlines */
+    repeating-linear-gradient(
+      to bottom,
+      rgba(0, 255, 156, 0.018) 0px,
+      rgba(0, 255, 156, 0.018) 1px,
+      transparent 1px,
+      transparent 3px
+    ),
+    /* vertical grid */
+    linear-gradient(to right, rgba(0, 255, 156, 0.035) 1px, transparent 1px),
+    /* horizontal grid */
+    linear-gradient(to bottom, rgba(0, 255, 156, 0.035) 1px, transparent 1px);
+  background-size: 100% 3px, 48px 48px, 48px 48px;
+  background-attachment: fixed;
 }
+
+/* Subtle phosphor glow on selected text */
+::selection {
+  background: rgba(0, 255, 156, 0.25);
+  color: rgb(230, 255, 240);
+}
+
+/* Scrollbar in keeping with the theme */
+*::-webkit-scrollbar { width: 10px; height: 10px; }
+*::-webkit-scrollbar-track { background: rgb(var(--bg-sunken)); }
+*::-webkit-scrollbar-thumb {
+  background: rgb(var(--border));
+  border: 2px solid rgb(var(--bg-sunken));
+  border-radius: 0;
+}
+*::-webkit-scrollbar-thumb:hover { background: rgb(var(--border-strong)); }
 
 @utility scrollbar-hide {
   -ms-overflow-style: none;
   scrollbar-width: none;
-  &::-webkit-scrollbar {
-    display: none;
-  }
+  &::-webkit-scrollbar { display: none; }
 }
 
-/* Single flat bordered section -- replaces panel / panel-subtle / panel-strong */
-.section {
-  border: 1px solid rgb(var(--border) / 0.45);
-  border-radius: 0.375rem;
-  padding: 1.25rem 1.5rem;
+/* ── Typographic helpers ────────────────────────────────────────────── */
+
+h1, h2, h3, h4, h5 {
+  font-family: var(--font-sans, var(--font-mono));
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  color: rgb(230 255 238);
 }
+
+a { color: rgb(var(--green)); text-decoration: none; }
+a:hover { text-decoration: underline; text-underline-offset: 3px; }
+
+code, pre, kbd, samp { font-family: var(--font-mono, ui-monospace, monospace); }
+
+/* ── Terminal primitives ────────────────────────────────────────────── */
+
+.prompt::before {
+  content: "$ ";
+  color: rgb(var(--green));
+  font-weight: 600;
+  opacity: 0.85;
+}
+
+.caret::after {
+  content: "█";
+  margin-left: 2px;
+  color: rgb(var(--green));
+  animation: caret-blink 1s steps(2, start) infinite;
+}
+
+@keyframes caret-blink {
+  to { visibility: hidden; }
+}
+
+.kbd {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  padding: 2px 6px;
+  border-radius: 3px;
+  color: rgb(var(--fg));
+  background: rgb(var(--bg-raised));
+  border: 1px solid rgb(var(--border));
+  border-bottom-width: 2px;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 2px 8px;
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: rgb(var(--fg-dim));
+  background: rgba(0, 255, 156, 0.04);
+  border: 1px solid rgb(var(--border));
+  border-radius: 3px;
+  font-family: var(--font-mono);
+}
+
+.chip-green  { color: rgb(var(--green)); border-color: rgba(0, 255, 156, 0.55); background: rgba(0, 255, 156, 0.08); }
+.chip-amber  { color: rgb(var(--amber)); border-color: rgba(255, 184, 0, 0.55); background: rgba(255, 184, 0, 0.08); }
+.chip-red    { color: rgb(var(--red));   border-color: rgba(255, 72, 72, 0.55);  background: rgba(255, 72, 72, 0.08); }
+.chip-cyan   { color: rgb(var(--cyan));  border-color: rgba(0, 220, 255, 0.55);  background: rgba(0, 220, 255, 0.08); }
+.chip-magenta{ color: rgb(var(--magenta)); border-color: rgba(255, 92, 200, 0.55); background: rgba(255, 92, 200, 0.08); }
+
+/* ── Sections / cards with corner-bracket accent ────────────────────── */
+
+.section {
+  position: relative;
+  padding: 1.15rem 1.35rem;
+  background: rgb(var(--bg-raised));
+  border: 1px solid rgb(var(--border));
+  border-radius: 4px;
+}
+
+/* Corner brackets — pure CSS, four absolutely-positioned L shapes */
+.section::before,
+.section::after {
+  content: "";
+  position: absolute;
+  width: 10px;
+  height: 10px;
+  border-color: rgb(var(--green));
+  pointer-events: none;
+}
+.section::before {
+  top: -1px; left: -1px;
+  border-top: 1px solid;
+  border-left: 1px solid;
+}
+.section::after {
+  bottom: -1px; right: -1px;
+  border-bottom: 1px solid;
+  border-right: 1px solid;
+}
+
+.section h1, .section h2, .section h3 {
+  font-family: var(--font-mono);
+  font-weight: 600;
+}
+
+/* ── Error / alert banners ──────────────────────────────────────────── */
 
 .error-banner {
-  @apply rounded-md px-4 py-3 text-sm;
-  border: 1px solid rgb(var(--critical) / 0.5);
-  color: rgb(252 165 165);
+  padding: 0.7rem 1rem;
+  font-size: 13px;
+  border: 1px solid rgba(255, 72, 72, 0.55);
+  background: rgba(255, 72, 72, 0.08);
+  color: rgb(255, 170, 170);
+  border-radius: 3px;
+  font-family: var(--font-mono);
+}
+.error-banner::before {
+  content: "[ERROR] ";
+  color: rgb(var(--red));
+  font-weight: 700;
 }
 
-/* ── Buttons ─────────────────────────────────────────────────────── */
+/* ── Buttons ────────────────────────────────────────────────────────── */
+
+.btn-primary,
+.btn-secondary,
+.btn-danger,
+.btn-ghost {
+  font-family: var(--font-mono);
+  font-weight: 500;
+  letter-spacing: 0.03em;
+  text-transform: none;
+  border-radius: 3px;
+  transition: all 120ms ease;
+  cursor: pointer;
+  user-select: none;
+}
+.btn-primary:disabled,
+.btn-secondary:disabled,
+.btn-danger:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
 
 .btn-primary {
-  @apply px-5 py-2.5 rounded-md text-base font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer;
-  background: rgb(50 60 78);
-  border: 1px solid rgb(var(--border) / 0.7);
-  color: rgb(var(--fg));
+  padding: 0.55rem 1.1rem;
+  font-size: 13px;
+  color: rgb(8, 20, 12);
+  background: rgb(var(--green));
+  border: 1px solid rgb(var(--green));
+  box-shadow: 0 0 0 1px rgba(0, 255, 156, 0.25) inset;
 }
-
 .btn-primary:hover:not(:disabled) {
-  background: rgb(62 74 94);
+  background: rgb(90, 255, 190);
+  box-shadow: 0 0 14px rgba(0, 255, 156, 0.35);
 }
 
 .btn-secondary {
-  @apply px-5 py-2.5 rounded-md text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer;
+  padding: 0.55rem 1.1rem;
+  font-size: 13px;
+  color: rgb(var(--green));
   background: transparent;
-  border: 1px solid rgb(var(--border) / 0.5);
-  color: rgb(var(--muted));
+  border: 1px solid rgb(var(--border-strong));
 }
-
 .btn-secondary:hover:not(:disabled) {
-  background: rgb(22 30 42);
-  color: rgb(var(--fg));
+  background: rgba(0, 255, 156, 0.08);
+  border-color: rgb(var(--green));
 }
 
 .btn-danger {
-  @apply px-5 py-2.5 rounded-md text-base font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer;
-  background: rgb(var(--critical) / 0.12);
-  border: 1px solid rgb(var(--critical) / 0.45);
-  color: rgb(var(--fg));
+  padding: 0.55rem 1.1rem;
+  font-size: 13px;
+  color: rgb(255, 180, 180);
+  background: rgba(255, 72, 72, 0.1);
+  border: 1px solid rgba(255, 72, 72, 0.55);
 }
-
 .btn-danger:hover:not(:disabled) {
-  background: rgb(var(--critical) / 0.22);
+  background: rgba(255, 72, 72, 0.18);
+  box-shadow: 0 0 10px rgba(255, 72, 72, 0.25);
 }
 
 .btn-ghost {
-  @apply px-3 py-2 rounded-md text-sm font-medium transition-colors cursor-pointer;
-  background: rgb(28 36 50);
-  border: 1px solid rgb(var(--border) / 0.4);
-  color: rgb(var(--fg));
+  padding: 0.35rem 0.75rem;
+  font-size: 12px;
+  color: rgb(var(--fg-dim));
+  background: transparent;
+  border: 1px solid rgb(var(--border));
 }
-
 .btn-ghost:hover {
-  background: rgb(38 48 64);
+  color: rgb(var(--green));
+  border-color: rgb(var(--green));
+  background: rgba(0, 255, 156, 0.05);
 }
 
-/* ── Status badges ───────────────────────────────────────────────── */
+/* ── Status badges ──────────────────────────────────────────────────── */
 
-.status-ok {
-  @apply rounded-full border px-3 py-1 text-xs font-medium;
-  background: rgb(var(--ok) / 0.15);
-  border-color: rgb(var(--ok) / 0.5);
-  color: rgb(var(--fg));
-}
-
-.status-warn {
-  @apply rounded-full border px-3 py-1 text-xs font-medium;
-  background: rgb(var(--warn) / 0.15);
-  border-color: rgb(var(--warn) / 0.5);
-  color: rgb(var(--fg));
-}
-
-.status-critical {
-  @apply rounded-full border px-3 py-1 text-xs font-medium;
-  background: rgb(var(--critical) / 0.15);
-  border-color: rgb(var(--critical) / 0.5);
-  color: rgb(var(--fg));
-}
-
+.status-ok,
+.status-warn,
+.status-critical,
 .status-neutral {
-  @apply rounded-full border px-3 py-1 text-xs font-medium;
-  background: rgb(28 36 50);
-  border-color: rgb(var(--border) / 0.5);
-  color: rgb(var(--fg));
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 2px 10px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  font-family: var(--font-mono);
+  border-radius: 3px;
+}
+.status-ok::before,
+.status-warn::before,
+.status-critical::before,
+.status-neutral::before {
+  content: "●";
+  font-size: 8px;
+  line-height: 1;
 }
 
-/* ── Form fields ─────────────────────────────────────────────────── */
+.status-ok       { background: rgba(0, 255, 156, 0.10); border: 1px solid rgba(0, 255, 156, 0.55); color: rgb(var(--green)); }
+.status-ok::before        { color: rgb(var(--green)); }
+
+.status-warn     { background: rgba(255, 184, 0, 0.10); border: 1px solid rgba(255, 184, 0, 0.55); color: rgb(var(--amber)); }
+.status-warn::before      { color: rgb(var(--amber)); }
+
+.status-critical { background: rgba(255, 72, 72, 0.10); border: 1px solid rgba(255, 72, 72, 0.55); color: rgb(var(--red)); }
+.status-critical::before  { color: rgb(var(--red)); }
+
+.status-neutral  { background: rgba(0, 255, 156, 0.04); border: 1px solid rgb(var(--border)); color: rgb(var(--fg-dim)); }
+.status-neutral::before   { color: rgb(var(--fg-dim)); }
+
+/* ── Form fields ────────────────────────────────────────────────────── */
 
 .field {
-  @apply w-full rounded-md px-3 py-2.5 text-base border;
-  background: rgb(30 40 55);
-  border-color: rgb(var(--border) / 0.6);
+  width: 100%;
+  padding: 0.55rem 0.75rem;
+  font-family: var(--font-mono);
+  font-size: 13px;
   color: rgb(var(--fg));
-}
-
-.field:focus {
+  background: rgb(var(--bg-sunken));
+  border: 1px solid rgb(var(--border));
+  border-radius: 3px;
   outline: none;
-  border-color: rgb(var(--accent));
-  box-shadow: 0 0 0 1px rgb(var(--accent) / 0.3);
+  transition: border-color 120ms, box-shadow 120ms;
+}
+.field::placeholder { color: rgb(var(--fg-dim)); opacity: 0.6; }
+.field:focus {
+  border-color: rgb(var(--green));
+  box-shadow: 0 0 0 1px rgba(0, 255, 156, 0.35), 0 0 12px rgba(0, 255, 156, 0.15);
+}
+.field:disabled { opacity: 0.5; cursor: not-allowed; }
+
+select.field {
+  appearance: none;
+  background-image: linear-gradient(45deg, transparent 50%, rgb(var(--green)) 50%),
+                    linear-gradient(135deg, rgb(var(--green)) 50%, transparent 50%);
+  background-position: calc(100% - 18px) 55%, calc(100% - 13px) 55%;
+  background-size: 5px 5px, 5px 5px;
+  background-repeat: no-repeat;
+  padding-right: 2rem;
 }
 
 .label {
-  @apply block text-sm font-medium mb-1.5;
-  color: rgb(var(--fg));
+  display: block;
+  margin-bottom: 0.35rem;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgb(var(--fg-dim));
+}
+.label::before {
+  content: "> ";
+  color: rgb(var(--green));
+  opacity: 0.8;
 }
 
-/* ── Code / output blocks ────────────────────────────────────────── */
+input[type="checkbox"] {
+  accent-color: rgb(var(--green));
+}
+
+/* ── Code / output blocks ───────────────────────────────────────────── */
 
 .code-block {
-  @apply rounded-md p-4 text-sm overflow-x-auto;
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-  background: rgb(14 20 30);
-  border: 1px solid rgb(var(--border) / 0.35);
-  color: rgb(195 205 220);
+  padding: 0.9rem 1rem;
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+  line-height: 1.6;
+  background: rgb(var(--bg-sunken));
+  border: 1px solid rgb(var(--border));
+  border-radius: 3px;
+  color: rgb(var(--fg));
+  overflow-x: auto;
+}
+
+.code-block code { color: inherit; }
+
+/* Hex / hash style — greenish, tabular */
+.hex { color: rgb(var(--green)); font-variant-numeric: tabular-nums; }
+
+/* ── Top-level chrome helpers ───────────────────────────────────────── */
+
+.term-divider {
+  height: 1px;
+  background: repeating-linear-gradient(to right,
+    rgb(var(--border)) 0 6px,
+    transparent 6px 10px);
+}
+
+.scan-overlay {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 1;
+  background: radial-gradient(ellipse at 50% 0%, rgba(0, 255, 156, 0.06), transparent 55%);
+}
+
+/* Live-ticker pulse */
+@keyframes pulse-dot {
+  0%, 100% { opacity: 1; }
+  50%      { opacity: 0.35; }
+}
+.pulse { animation: pulse-dot 1.6s ease-in-out infinite; }
+
+/* Soft glow used for signals */
+.glow-green { text-shadow: 0 0 8px rgba(0, 255, 156, 0.55); }
+.glow-amber { text-shadow: 0 0 8px rgba(255, 184, 0, 0.55); }
+.glow-red   { text-shadow: 0 0 8px rgba(255, 72, 72, 0.55); }
+
+/* Shared overlay style for modals / command palette */
+.overlay-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.72);
+  backdrop-filter: blur(2px);
+  z-index: 60;
+}
+
+/* ─────────────────────────────────────────────────────────────────────
+   Legacy palette remap
+   The existing tab components use Tailwind's slate-* utility classes for
+   muted text, borders, etc. Rather than rewrite them all, we remap those
+   utilities to match the new phosphor palette here. Safe because all of
+   these classes are only used for ambient chrome (text / borders / bg).
+   ───────────────────────────────────────────────────────────────────── */
+
+/* Muted text */
+.text-slate-500 { color: rgb(var(--fg-dim)) !important; opacity: 0.85; }
+.text-slate-400 { color: rgb(var(--fg-dim)) !important; }
+.text-slate-300 { color: rgb(var(--fg)) !important; }
+.text-slate-200 { color: rgb(var(--fg)) !important; }
+.text-slate-100 { color: rgb(230 255 238) !important; }
+.text-white     { color: rgb(230 255 238) !important; }
+
+/* Borders */
+.border-slate-600\/50,
+.border-slate-600,
+.border-slate-700,
+.border-slate-700\/25,
+.border-slate-700\/30,
+.border-slate-700\/40,
+.border-slate-700\/50,
+.border-slate-700\/60,
+.border-slate-700\/70,
+.border-slate-800 {
+  border-color: rgb(var(--border)) !important;
+}
+
+/* Backgrounds */
+.bg-slate-700\/20,
+.bg-slate-800,
+.bg-slate-800\/50,
+.bg-slate-900,
+.bg-slate-900\/50 {
+  background-color: rgb(var(--bg-raised)) !important;
+}
+
+/* Semantic Tailwind palette remap — keep the meaning (ok/warn/crit)
+   but in phosphor / amber / red instead of green-500 / yellow-500 / red-500 */
+.bg-green-500  { background-color: rgb(var(--green)) !important; }
+.bg-yellow-500 { background-color: rgb(var(--amber)) !important; }
+.bg-red-500    { background-color: rgb(var(--red)) !important; }
+.bg-red-400    { background-color: rgb(var(--red)) !important; }
+.bg-gray-400   { background-color: rgb(var(--fg-dim)) !important; }
+
+/* Focus / hover accents for legacy class usage */
+.hover\:text-white:hover          { color: rgb(var(--green)) !important; }
+.hover\:text-slate-200:hover      { color: rgb(var(--green)) !important; }
+.hover\:border-slate-400:hover    { border-color: rgb(var(--green)) !important; }
+
+/* ── Brand-accent remaps ────────────────────────────────────────────
+   Legacy subroutes used indigo/violet/fuchsia/emerald for semantic accents
+   (primary CTAs, wallet highlights, PQC badges, success markers). Remap
+   them all to the phosphor palette so blockchain/pqc/research pages stay
+   on-brand without touching each file.
+   ─────────────────────────────────────────────────────────────────── */
+
+/* Text */
+.text-indigo-300, .text-indigo-400, .text-indigo-500,
+.text-violet-300, .text-violet-400, .text-violet-500,
+.text-fuchsia-300, .text-fuchsia-400, .text-fuchsia-500,
+.text-emerald-300, .text-emerald-400, .text-emerald-500 {
+  color: rgb(var(--green)) !important;
+}
+
+/* Borders */
+.border-indigo-400, .border-indigo-500, .border-indigo-500\/40, .border-indigo-500\/50,
+.border-violet-400, .border-violet-500, .border-violet-500\/40, .border-violet-500\/50,
+.border-fuchsia-400, .border-fuchsia-500, .border-fuchsia-500\/40, .border-fuchsia-500\/50,
+.border-emerald-400, .border-emerald-500, .border-emerald-500\/40, .border-emerald-500\/50 {
+  border-color: rgb(var(--green)) !important;
+}
+
+/* Solid backgrounds (CTAs) */
+.bg-indigo-500, .bg-indigo-600, .bg-indigo-700,
+.bg-violet-500, .bg-violet-600, .bg-violet-700,
+.bg-fuchsia-500, .bg-fuchsia-600, .bg-fuchsia-700,
+.bg-emerald-500, .bg-emerald-600, .bg-emerald-700 {
+  background-color: rgba(0, 255, 156, 0.12) !important;
+  color: rgb(var(--green)) !important;
+  border: 1px solid rgb(var(--green)) !important;
+}
+
+/* Translucent tints */
+.bg-indigo-500\/10, .bg-indigo-500\/20, .bg-indigo-500\/30,
+.bg-violet-500\/10, .bg-violet-500\/20, .bg-violet-500\/30,
+.bg-fuchsia-500\/10, .bg-fuchsia-500\/20, .bg-fuchsia-500\/30,
+.bg-emerald-500\/10, .bg-emerald-500\/20, .bg-emerald-500\/30 {
+  background-color: rgba(0, 255, 156, 0.08) !important;
+}
+
+/* Hover / focus */
+.hover\:bg-indigo-500:hover, .hover\:bg-indigo-600:hover, .hover\:bg-indigo-700:hover,
+.hover\:bg-violet-500:hover, .hover\:bg-violet-600:hover,
+.hover\:bg-fuchsia-500:hover, .hover\:bg-fuchsia-600:hover,
+.hover\:bg-emerald-500:hover, .hover\:bg-emerald-600:hover {
+  background-color: rgba(0, 255, 156, 0.18) !important;
+}
+.hover\:text-indigo-300:hover, .hover\:text-indigo-400:hover,
+.hover\:text-violet-300:hover, .hover\:text-violet-400:hover,
+.hover\:text-fuchsia-300:hover, .hover\:text-fuchsia-400:hover,
+.hover\:text-emerald-300:hover, .hover\:text-emerald-400:hover {
+  color: rgb(var(--green)) !important;
+}
+
+/* Amber / yellow warnings — map to phosphor-amber */
+.text-amber-300, .text-amber-400, .text-amber-500,
+.text-yellow-300, .text-yellow-400, .text-yellow-500 {
+  color: rgb(var(--amber)) !important;
+}
+.border-amber-400, .border-amber-500, .border-amber-500\/40, .border-amber-500\/50,
+.border-yellow-400, .border-yellow-500 {
+  border-color: rgb(var(--amber)) !important;
+}
+.bg-amber-500\/10, .bg-amber-500\/20,
+.bg-yellow-500\/10, .bg-yellow-500\/20 {
+  background-color: rgba(255, 184, 0, 0.08) !important;
+}
+
+/* Red / rose warnings — map to phosphor-red */
+.text-red-300, .text-red-400, .text-red-500,
+.text-rose-300, .text-rose-400, .text-rose-500 {
+  color: rgb(var(--red)) !important;
+}
+.border-red-400, .border-red-500, .border-red-500\/40, .border-red-500\/50,
+.border-rose-400, .border-rose-500 {
+  border-color: rgb(var(--red)) !important;
+}
+.bg-red-500\/10, .bg-red-500\/20,
+.bg-rose-500\/10, .bg-rose-500\/20 {
+  background-color: rgba(255, 72, 72, 0.08) !important;
 }

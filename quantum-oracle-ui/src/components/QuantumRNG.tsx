@@ -10,6 +10,7 @@ import {
   requestQuantumRandomness,
 } from '@/utils/api';
 import { CopyButton, DownloadButton, InfoPopover, KVRow, MonoValue } from './ui';
+import { RawView } from './terminal/RawView';
 
 interface ResultItem {
   id: string;
@@ -663,7 +664,11 @@ export const QuantumRNG = () => {
               <button
                 key={f}
                 onClick={() => setResultFilter(f)}
-                className={`text-xs px-3 py-1 rounded-full transition-colors ${resultFilter === f ? 'bg-indigo-600 text-white' : 'bg-slate-800 text-slate-400 hover:text-white'}`}
+                className={`text-[11px] px-3 py-1 rounded-[3px] font-mono uppercase tracking-[0.08em] transition-colors border ${
+                  resultFilter === f
+                    ? 'bg-[rgba(0,255,156,0.08)] text-[rgb(var(--green))] border-[rgb(var(--green))]'
+                    : 'text-[rgb(var(--fg-dim))] border-[rgb(var(--border))] hover:text-[rgb(var(--green))] hover:border-[rgb(var(--green))]'
+                }`}
               >
                 {f}
               </button>
@@ -707,11 +712,11 @@ export const QuantumRNG = () => {
                       <div className="pt-2">
                         {r.meta.map(([k, v]) =>
                           k === 'Commitment' && v.length > 20 ? (
-                            <div key={k} className="flex items-baseline justify-between gap-4 py-2 border-b border-slate-700/25 last:border-0">
-                              <span className="text-sm text-slate-400 shrink-0">{k}</span>
+                            <div key={k} className="flex items-baseline justify-between gap-4 py-2 border-b border-[rgb(var(--border))]/60 last:border-0">
+                              <span className="text-[11px] uppercase tracking-[0.1em] text-[rgb(var(--fg-dim))] shrink-0">{k}</span>
                               <div className="flex items-center gap-2">
-                                <code className="text-sm font-mono text-slate-200">{v.slice(0, 16)}...</code>
-                                <CopyButton value={v} label="Copy" />
+                                <code className="text-sm font-mono text-[rgb(var(--green))]">{v.slice(0, 16)}...</code>
+                                <CopyButton value={v} label="copy" />
                               </div>
                             </div>
                           ) : (
@@ -720,6 +725,10 @@ export const QuantumRNG = () => {
                         )}
                       </div>
                     )}
+                    <RawView
+                      data={(() => { try { return JSON.parse(r.raw); } catch { return r.raw; } })()}
+                      title="raw payload"
+                    />
                   </div>
                 )}
               </div>
