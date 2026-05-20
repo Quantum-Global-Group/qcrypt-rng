@@ -1,10 +1,13 @@
+# Uses root Dockerfile (HF Spaces stack: Nginx + FastAPI + Next on 7860).
+# Golden path for day-to-day dev: `python run_api.py` + `cd quantum-oracle-ui && npm run dev`.
+# Streamlit is lab-only — not in this stack; see docs/planning/STREAMLIT_DECISION.md.
 version: '3.8'
 
 services:
   api:
     build: .
     ports:
-      - "8000:8000"
+      - "7860:7860"
     environment:
       - ENVIRONMENT=production
       - DEBUG=false
@@ -18,7 +21,7 @@ services:
       - redis
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      test: ["CMD", "curl", "-f", "http://localhost:7860/health"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -38,16 +41,8 @@ services:
     image: redis:7-alpine
     restart: unless-stopped
 
-  dashboard:
-    build: .
-    ports:
-      - "8501:8501"
-    command: streamlit run dashboard.py --server.address 0.0.0.0 --server.port 8501
-    environment:
-      - API_BASE_URL=http://api:8000/api/v2
-    depends_on:
-      - api
-    restart: unless-stopped
+  # Streamlit `dashboard.py` is lab-only and not installed in the root image; see
+  # docs/planning/STREAMLIT_DECISION.md. Run locally: pip install streamlit && streamlit run dashboard.py
 
 volumes:
   postgres_data:

@@ -54,7 +54,7 @@ npm run dev
 
 Dashboard: http://localhost:3000 (auto-discovers API on ports 8000–8004, or set `NEXT_PUBLIC_API_BASE_URL`).
 
-**Production:** See [PRODUCTION.md](PRODUCTION.md). For Docker: `docker-compose up -d` or Kubernetes via `./deploy.sh`.
+**Production:** See [PRODUCTION.md](PRODUCTION.md). For Docker: `docker-compose up -d` (Spaces-aligned image on port **7860**) or Kubernetes via `./deploy.sh`.
 
 **Hugging Face Spaces:** The root `Dockerfile` is built for Spaces (Nginx + FastAPI + Next.js on port 7860). Create a Docker Space, add the Space as a remote, and push `main`; use a [HF token](https://huggingface.co/settings/tokens) with write access when prompted. The app will be available at your Space URL after the build completes.
 
@@ -105,6 +105,8 @@ Full interactive API docs: http://localhost:8000/docs (or `/swagger` when runnin
 
 ## Documentation
 
+- **[Documentation index](docs/README.md)** — planning artifacts (scope, milestones, sprints, owners), OpenAPI entry points, scenario guides, Protect-style doc expectations
+- **[Streamlit legacy stance](docs/planning/STREAMLIT_DECISION.md)** — lab-only `dashboard.py`; primary UI is Next.js; Gradio Space is the lightweight researcher demo (see [`BUILD_SCOPE.md`](docs/planning/BUILD_SCOPE.md))
 - In-app documentation: `/docs` in the web dashboard
 - [PRODUCTION.md](PRODUCTION.md) — deployment and operations
 - [Python SDK](client_sdk/python/README.md) — client library

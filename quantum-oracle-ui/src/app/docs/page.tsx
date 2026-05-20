@@ -81,6 +81,9 @@ export default function DocsPage() {
             <Link href="/" className="btn-ghost">
               ← back
             </Link>
+            <Link href="/scenarios" className="btn-ghost hidden sm:inline-flex">
+              scenarios
+            </Link>
           </div>
         </div>
       </header>
@@ -93,6 +96,14 @@ export default function DocsPage() {
             cryptographically secure randomness, post-quantum cryptography,
             blockchain security tools, and a verifiable random function (VRF)
             oracle. The dashboard organises features into five tabs.
+          </p>
+          <p className="text-xs text-[rgb(var(--fg-dim))] font-mono leading-relaxed">
+            For composed Prove / Protect / Randomize workflows (lottery, sealed bid, committee),
+            see the{' '}
+            <Link href="/scenarios" className="text-[rgb(var(--green))] hover:underline">
+              scenario guides
+            </Link>
+            .
           </p>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 pt-2">
             {tabs.map(([title, desc]) => (

@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+/* eslint-disable @typescript-eslint/no-require-imports -- Node CLI; CommonJS require is intentional */
 /**
  * Finds an available port starting from the preferred default (3000).
  * Prints the port number to stdout so npm scripts can capture it.

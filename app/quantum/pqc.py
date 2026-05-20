@@ -3,18 +3,61 @@ QCrypt RNG - Post-Quantum Cryptography Module
 Provides quantum-safe cryptographic operations using liboqs
 """
 
-from typing import Dict, Any
+from typing import Dict, Any, Optional
 from dataclasses import dataclass
 import hashlib
+import logging
 import secrets
 from functools import lru_cache
 
-try:
-    import oqs
-    LIBOQS_AVAILABLE = True
-except (ImportError, RuntimeError):
-    LIBOQS_AVAILABLE = False
-    print("Warning: liboqs not available. Using fallback implementation.")
+logger = logging.getLogger(__name__)
+
+
+def _native_liboqs_present() -> bool:
+    """Probe for liboqs without triggering oqs-python's auto-install (which calls sys.exit on failure)."""
+    import ctypes.util as ctu
+    import platform
+    from os import environ
+    from pathlib import Path
+
+    if ctu.find_library("oqs") or ctu.find_library("liboqs"):
+        return True
+
+    install_roots = []
+    if "OQS_INSTALL_PATH" in environ:
+        install_roots.append(Path(environ["OQS_INSTALL_PATH"]))
+    install_roots.append(Path.home() / "_oqs")
+
+    suffix = ".dll" if platform.system() == "Windows" else ".so"
+    lib_names = (f"liboqs{suffix}", f"oqs{suffix}")
+    for root in install_roots:
+        for sub in ("lib", "lib64", "bin"):
+            lib_dir = root / sub
+            if not lib_dir.is_dir():
+                continue
+            if any((lib_dir / name).is_file() for name in lib_names):
+                return True
+    return False
+
+
+# liboqs-python auto-install calls sys.exit(1) on failure — catch SystemExit so the API can boot.
+oqs: Optional[Any] = None
+LIBOQS_AVAILABLE = False
+if _native_liboqs_present():
+    try:
+        import oqs as _oqs
+
+        oqs = _oqs
+        LIBOQS_AVAILABLE = True
+    except (ImportError, RuntimeError, SystemExit):
+        logger.warning(
+            "liboqs present but oqs-python failed to load; using PQC simulation fallback."
+        )
+else:
+    logger.warning(
+        "liboqs not installed; PQC endpoints use the simulation fallback "
+        "(install native liboqs for NIST-backed operations)."
+    )
 
 
 @dataclass

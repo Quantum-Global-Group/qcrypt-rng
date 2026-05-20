@@ -1,15 +1,35 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { Suspense, useCallback, useEffect, useMemo, useState } from 'react';
+import { useSearchParams } from 'next/navigation';
+import Link from 'next/link';
 import { NetworkStatus } from '@/components/NetworkStatus';
 import { Protect } from '@/components/Protect';
 import { QuantumOracle } from '@/components/QuantumOracle';
 import { QuantumRNG } from '@/components/QuantumRNG';
 import { ThreatScanner } from '@/components/ThreatScanner';
+import { PillarBridgeCallout } from '@/components/scenarios/PillarBridgeCallout';
 import type { PaletteCommand } from '@/components/terminal/CommandPalette';
 import { checkHealth } from '@/utils/api';
 
 type TabId = 'oracle' | 'protect' | 'generate' | 'threat' | 'network';
+
+const TAB_ALIASES: Record<string, TabId> = {
+  oracle: 'oracle',
+  prove: 'oracle',
+  protect: 'protect',
+  rng: 'generate',
+  randomize: 'generate',
+  generate: 'generate',
+  threat: 'threat',
+  threats: 'threat',
+  network: 'network',
+};
+
+function resolveTabParam(raw: string | null): TabId | null {
+  if (!raw) return null;
+  return TAB_ALIASES[raw.toLowerCase()] ?? null;
+}
 
 type TabDef = { id: TabId; label: string; hint: string; group: 'feature' | 'info' };
 
@@ -22,7 +42,22 @@ const TABS: TabDef[] = [
 ];
 
 export default function Home() {
-  const [activeTab, setActiveTab] = useState<TabId>('oracle');
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-[rgb(var(--bg))]" />}>
+      <HomeDashboardLoader />
+    </Suspense>
+  );
+}
+
+function HomeDashboardLoader() {
+  const searchParams = useSearchParams();
+  const tabKey = searchParams.get('tab') ?? 'default';
+  const initialTab = resolveTabParam(searchParams.get('tab')) ?? 'oracle';
+  return <HomeDashboard key={tabKey} initialTab={initialTab} />;
+}
+
+function HomeDashboard({ initialTab }: { initialTab: TabId }) {
+  const [activeTab, setActiveTab] = useState<TabId>(initialTab);
   const [apiHealth, setApiHealth] = useState<'loading' | 'online' | 'offline'>('loading');
 
   // Live health probe for the header indicator
@@ -140,6 +175,7 @@ export default function Home() {
                 <span className="kbd">⌘K</span>
               </button>
               <a href="/docs" className="btn-ghost hidden sm:inline-flex">docs</a>
+              <Link href="/scenarios" className="btn-ghost hidden sm:inline-flex">scenarios</Link>
               <span className={healthChip.cls}>{healthChip.text}</span>
             </div>
           </div>
@@ -187,6 +223,9 @@ export default function Home() {
           <span>module</span>
           <span className="text-[rgb(var(--fg-dim))]">{'//'}</span>
           <span className="text-[rgb(var(--fg))]">{activeTab}</span>
+        </div>
+        <div className="mb-5">
+          <PillarBridgeCallout compact />
         </div>
         {renderTabContent()}
       </main>

@@ -1,12 +1,12 @@
 'use client';
 
 import { useState, useCallback } from 'react';
-import { encryptData, generatePQCKey, hashData, signPqc } from '@/utils/api';
+import { decryptData, encryptData, generatePQCKey, hashData, signPqc } from '@/utils/api';
 import { cn } from '@/lib/utils';
 import { useBlockchain } from './BlockchainContext';
 import { AnalystEvidencePanel, SectionLabel } from './AnalystEvidencePanel';
 
-type Mode = 'encrypt' | 'hash' | 'sign';
+type Mode = 'encrypt' | 'decrypt' | 'hash' | 'sign';
 
 const HASH_ALGORITHMS = ['SHA3-256', 'SHA3-512', 'BLAKE2b-256'] as const;
 type HashAlg = (typeof HASH_ALGORITHMS)[number];
@@ -24,8 +24,18 @@ export function ProtectVault() {
 
   // Encrypt state
   const [encryptResult, setEncryptResult] = useState<{
-    ciphertext: string; key: string; iv: string; tag: string;
+    ciphertext: string; key: string; iv: string; tag: string; algorithm: string;
   } | null>(null);
+
+  // Decrypt state
+  const [decryptFields, setDecryptFields] = useState({
+    ciphertext: '',
+    key: '',
+    iv: '',
+    tag: '',
+    algorithm: 'AES-256-GCM',
+  });
+  const [decryptResult, setDecryptResult] = useState<string | null>(null);
 
   // Hash state
   const [hashAlg, setHashAlg] = useState<HashAlg>('SHA3-256');
@@ -50,8 +60,17 @@ export function ProtectVault() {
             key: res.data.key,
             iv: res.data.iv,
             tag: res.data.tag,
+            algorithm: res.data.algorithm ?? 'AES-256-GCM',
           });
+          setDecryptResult(null);
         }
+      } else if (mode === 'decrypt') {
+        const { ciphertext, key, iv, tag, algorithm } = decryptFields;
+        if (!ciphertext.trim() || !key.trim() || !iv.trim() || !tag.trim()) {
+          throw new Error('Ciphertext, key, IV, and tag are required');
+        }
+        const res = await decryptData({ ciphertext, key, iv, tag, algorithm });
+        if (res.data) setDecryptResult(res.data.plaintext);
       } else if (mode === 'hash') {
         const res = await hashData({ data: input, algorithm: hashAlg, use_quantum_salt: true });
         if (res.data) setHashResult({ hash: res.data.hash, algorithm: res.data.algorithm });
@@ -69,10 +88,23 @@ export function ProtectVault() {
     } finally {
       setLoading(false);
     }
-  }, [mode, input, hashAlg, signAlg]);
+  }, [mode, input, hashAlg, signAlg, decryptFields]);
+
+  const loadEncryptIntoDecrypt = useCallback(() => {
+    if (!encryptResult) return;
+    setDecryptFields({
+      ciphertext: encryptResult.ciphertext,
+      key: encryptResult.key,
+      iv: encryptResult.iv,
+      tag: encryptResult.tag,
+      algorithm: encryptResult.algorithm,
+    });
+    setDecryptResult(null);
+  }, [encryptResult]);
 
   const modes: { id: Mode; label: string }[] = [
     { id: 'encrypt', label: 'Encrypt' },
+    { id: 'decrypt', label: 'Decrypt' },
     { id: 'hash', label: 'Hash' },
     { id: 'sign', label: 'PQC Sign' },
   ];
@@ -151,23 +183,67 @@ export function ProtectVault() {
       )}
 
       {/* Input */}
-      <div className="space-y-2">
-        <SectionLabel>Payload</SectionLabel>
-        <textarea
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
-          rows={3}
-          placeholder="Enter data to protect…"
-          className="w-full rounded border border-slate-600 bg-slate-800/60 px-3 py-2 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500 resize-none"
-        />
-      </div>
+      {mode !== 'decrypt' ? (
+        <div className="space-y-2">
+          <SectionLabel>Payload</SectionLabel>
+          <textarea
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            rows={3}
+            placeholder="Enter data to protect…"
+            className="w-full rounded border border-slate-600 bg-slate-800/60 px-3 py-2 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500 resize-none"
+          />
+        </div>
+      ) : (
+        <div className="space-y-3">
+          {encryptResult && (
+            <button
+              type="button"
+              onClick={loadEncryptIntoDecrypt}
+              className="text-xs text-indigo-300 hover:text-indigo-200 underline-offset-2 hover:underline"
+            >
+              Load fields from last encrypt output
+            </button>
+          )}
+          {(['ciphertext', 'key', 'iv', 'tag'] as const).map((field) => (
+            <div key={field} className="space-y-1">
+              <SectionLabel className="mb-0 capitalize">{field.replace('_', ' ')}</SectionLabel>
+              <textarea
+                value={decryptFields[field]}
+                onChange={(e) =>
+                  setDecryptFields((prev) => ({ ...prev, [field]: e.target.value }))
+                }
+                rows={field === 'ciphertext' ? 3 : 2}
+                placeholder={`Paste ${field}…`}
+                className="w-full rounded border border-slate-600 bg-slate-800/60 px-3 py-2 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500 resize-none font-mono text-xs"
+              />
+            </div>
+          ))}
+        </div>
+      )}
 
       <button
         onClick={run}
-        disabled={loading || !input.trim()}
+        disabled={
+          loading ||
+          (mode === 'decrypt'
+            ? !decryptFields.ciphertext.trim() ||
+              !decryptFields.key.trim() ||
+              !decryptFields.iv.trim() ||
+              !decryptFields.tag.trim()
+            : !input.trim())
+        }
         className="px-4 py-2 rounded bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white text-sm font-medium transition-colors"
       >
-        {loading ? 'Processing…' : mode === 'encrypt' ? 'Encrypt' : mode === 'hash' ? 'Hash' : 'Sign'}
+        {loading
+          ? 'Processing…'
+          : mode === 'encrypt'
+            ? 'Encrypt'
+            : mode === 'decrypt'
+              ? 'Decrypt'
+              : mode === 'hash'
+                ? 'Hash'
+                : 'Sign'}
       </button>
 
       {error && <p className="text-sm text-red-400">{error}</p>}
@@ -182,6 +258,13 @@ export function ProtectVault() {
             { label: 'IV', value: encryptResult.iv },
             { label: 'Auth Tag', value: encryptResult.tag },
           ]}
+        />
+      )}
+
+      {mode === 'decrypt' && decryptResult !== null && (
+        <AnalystEvidencePanel
+          title="Decrypted Plaintext"
+          fields={[{ label: 'Plaintext', value: decryptResult }]}
         />
       )}
 
