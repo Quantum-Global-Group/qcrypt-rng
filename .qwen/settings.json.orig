@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(find *)",
+      "Bash(ls *)",
+      "Read(//mnt/c/Users/Jon B/Downloads/stitch_quantum_oracle_prd_cybersecurity/stitch_quantum_oracle_prd_cybersecurity/**)"
+    ]
+  }
+}
