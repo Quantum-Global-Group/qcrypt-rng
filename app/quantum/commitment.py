@@ -16,10 +16,13 @@ def compute_commitment(randomness_bytes: bytes) -> bytes:
     """Return keccak256(abi.encodePacked(uint256(randomness))) as raw bytes.
 
     ``randomness_bytes`` is the raw quantum output (typically 32 bytes).
-    It is first interpreted as a big-endian unsigned integer and then
-    re-encoded as a 32-byte big-endian value so the hash matches what
-    Solidity's ``abi.encodePacked(uint256)`` would produce.
+    Input longer than 32 bytes is hashed with SHA3-256 first so it always
+    fits the uint256 encoding.  Input ≤ 32 bytes is used directly as a
+    big-endian unsigned integer.
     """
+    if len(randomness_bytes) > 32:
+        import hashlib
+        randomness_bytes = hashlib.sha3_256(randomness_bytes).digest()
     randomness_int = int.from_bytes(randomness_bytes, "big")
     encoded = randomness_int.to_bytes(32, "big")
     k = keccak.new(digest_bits=256, data=encoded)

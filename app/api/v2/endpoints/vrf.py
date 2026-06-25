@@ -51,6 +51,23 @@ class VrfVerifyRequest(BaseModel):
     seed: str = Field(..., description="Hex-encoded seed (no 0x prefix or with)")
 
 
+class CommitteeSelectRequest(BaseModel):
+    vrf_output: str = Field(
+        ...,
+        description="0x-prefixed hex VRF output (32 bytes) to use as entropy source",
+    )
+    roster: list[str] = Field(
+        ...,
+        description="Ordered list of candidate identifiers (names, addresses, IDs)",
+        min_length=1,
+    )
+    size: int = Field(
+        ...,
+        description="Number of committee members to select",
+        ge=1,
+    )
+
+
 # ---------------------------------------------------------------------------
 # Endpoints
 # ---------------------------------------------------------------------------
@@ -183,5 +200,116 @@ async def vrf_verify(request: VrfVerifyRequest):
             "valid": valid,
             "commitment_valid": commitment_ok,
             "output_valid": output_ok,
+        },
+    )
+
+
+# ---------------------------------------------------------------------------
+# Committee selection — deterministic Fisher-Yates from a VRF output
+# ---------------------------------------------------------------------------
+
+def _committee_keystream(vrf_output: bytes, n_blocks: int) -> bytes:
+    """Derive `n_blocks * 8` random bytes from a VRF output using SHA3-256 in counter mode.
+
+    Each block is `keccak256(vrf_output || counter_be_8)`, giving an
+    independent 32-byte random block.  For 64-bit random integers we take
+    the first 8 bytes of each block (rejection sampling applied in caller).
+    """
+    from hashlib import sha3_256
+    out = bytearray()
+    for i in range(n_blocks):
+        out += sha3_256(vrf_output + i.to_bytes(8, "big")).digest()
+    return bytes(out)
+
+
+def _committee_select(vrf_output: bytes, roster: list[str], size: int) -> list[dict]:
+    """Select `size` members from `roster` using a deterministic Fisher-Yates
+    shuffle seeded by the VRF output.
+
+    Returns a list of {index, member} dicts in selection order.
+    """
+    n = len(roster)
+    if size > n:
+        size = n
+    indices = list(range(n))
+
+    # Generate enough 8-byte random blocks for n-1 steps.
+    needed = max(n - 1, 0)
+    stream = _committee_keystream(vrf_output, needed)
+
+    # Fisher-Yates shuffle, partial (only first `size` positions need settling).
+    for i in range(size):
+        j_range = n - 1 - i
+        # Rejection sample on the 8-byte block to avoid modulo bias.
+        while True:
+            offset = (n - 2 - i) * 8 if (n - 2 - i) >= 0 else 0
+            block = stream[offset:offset + 8]
+            rand_int = int.from_bytes(block, "big")
+            if j_range < (1 << 53):
+                # Safe: j_range fits in 53 bits, so no bias.
+                pick = rand_int % (j_range + 1)
+                break
+            if rand_int < (1 << 64) - (1 << 64) % (j_range + 1):
+                pick = rand_int % (j_range + 1)
+                break
+            # Re-derive next block on rejection.
+            stream += _committee_keystream(vrf_output, 1)
+        # Swap indices[j_range] with indices[rand position].
+        swap_pos = j_range - pick
+        indices[j_range], indices[swap_pos] = indices[swap_pos], indices[j_range]
+
+    return [
+        {"index": indices[n - 1 - i], "member": roster[indices[n - 1 - i]]}
+        for i in range(size)
+    ]
+
+
+@router.post("/select-committee", response_model=BaseResponse)
+async def select_committee(request: CommitteeSelectRequest):
+    """
+    Deterministically select a committee of `size` members from `roster`
+    using a VRF output as the entropy source.
+
+    Algorithm: Fisher-Yates shuffle seeded by SHA3-256(vrf_output || counter)
+    counter-mode blocks.  The selection is reproducible: anyone with the same
+    VRF output, roster, and size gets the same committee.
+
+    The caller is expected to have verified the VRF output (via /vrf/verify)
+    before using it as the selection entropy source.
+    """
+    try:
+        raw_output = request.vrf_output.removeprefix("0x")
+        vrf_output = bytes.fromhex(raw_output)
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Invalid hex vrf_output")
+
+    if len(vrf_output) != 32:
+        raise HTTPException(
+            status_code=400,
+            detail=f"vrf_output must be 32 bytes, got {len(vrf_output)}",
+        )
+
+    n = len(request.roster)
+    if request.size > n:
+        raise HTTPException(
+            status_code=400,
+            detail=f"size ({request.size}) cannot exceed roster length ({n})",
+        )
+
+    selected = _committee_select(vrf_output, request.roster, request.size)
+
+    return BaseResponse(
+        status=ResponseStatus.SUCCESS,
+        request_id=f"committee_{int(time.time() * 1_000_000)}",
+        data={
+            "selected": selected,
+            "size": len(selected),
+            "roster_size": n,
+            "algorithm": "fisher_yates_vrf",
+        },
+        metadata={
+            "vrf_output": request.vrf_output,
+            "reproducible": True,
+            "verification": "re-run with same vrf_output + roster to verify",
         },
     )

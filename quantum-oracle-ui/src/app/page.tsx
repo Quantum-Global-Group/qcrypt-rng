@@ -34,11 +34,11 @@ function resolveTabParam(raw: string | null): TabId | null {
 type TabDef = { id: TabId; label: string; hint: string; group: 'feature' | 'info' };
 
 const TABS: TabDef[] = [
-  { id: 'oracle',  label: 'oracle',  hint: 'VRF, PQ wallets, chain adapters',     group: 'feature' },
-  { id: 'protect', label: 'protect', hint: 'encrypt, sign, KEM, hybrid schemes',  group: 'feature' },
-  { id: 'generate',label: 'rng',     hint: 'bytes, keys, passwords, tokens',      group: 'feature' },
-  { id: 'threat',  label: 'threats', hint: 'quantum risk intel on algorithms',    group: 'info' },
-  { id: 'network', label: 'network', hint: 'nodes, peers, block heights',         group: 'info' },
+  { id: 'oracle',  label: 'Prove',    hint: 'VRF, PQ wallets, chain adapters',     group: 'feature' },
+  { id: 'protect', label: 'Protect',  hint: 'encrypt, sign, KEM, hybrid schemes',  group: 'feature' },
+  { id: 'generate',label: 'Randomize',hint: 'bytes, keys, passwords, tokens',      group: 'feature' },
+  { id: 'threat',  label: 'Threats',  hint: 'quantum risk intel on algorithms',    group: 'info' },
+  { id: 'network', label: 'Network',  hint: 'nodes, peers, block heights',         group: 'info' },
 ];
 
 export default function Home() {

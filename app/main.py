@@ -110,10 +110,13 @@ app = FastAPI(
 )
 
 
-# Add middleware in the right order
+# Add middleware in the right order.
+# In FastAPI/Starlette, the LAST middleware added is the OUTERMOST
+# (runs first on request).  We want API key validation to short-circuit
+# before rate limiting, so add api_key_middleware last.
 app.middleware("http")(monitoring_middleware)
-app.middleware("http")(api_key_middleware)
 app.middleware("http")(rate_limit_middleware)
+app.middleware("http")(api_key_middleware)
 
 # Configure CORS using the allowed_origins list from settings
 app.add_middleware(

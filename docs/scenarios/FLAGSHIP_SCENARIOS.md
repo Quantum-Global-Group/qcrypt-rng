@@ -4,7 +4,7 @@
 
 **API prefix:** `/api/v2` (default in `app/config.py`; routers mounted in `app/main.py`).
 
-**UI surfaces:** Primary dashboard at `/` (`quantum-oracle-ui/src/app/page.tsx` — tabs **oracle**, **protect**, **rng**, network); blockchain pillar pages under `/blockchain/prove`, `/blockchain/protect`, `/blockchain/randomize`.
+**UI surfaces:** Primary dashboard at `/` (`quantum-oracle-ui/src/app/page.tsx` — tabs **Prove**, **Protect**, **Randomize**, threats, network); blockchain pillar pages under `/blockchain/prove`, `/blockchain/protect`, `/blockchain/randomize`. Pillar names are unified across both surfaces.
 
 ---
 
@@ -93,32 +93,32 @@ Client wiring: `quantum-oracle-ui/src/utils/api.ts`.
 | Canonical roster / fingerprint | Prove (+ Protect) | `/blockchain/prove`; `/blockchain/protect` (hash); `/` protect tab | `POST /api/v2/protect/hash`; `POST /api/v2/pqc/sign`, `/pqc/verify` | |
 | Agreed random seed bound to round | Randomize + Prove | `/`; `/blockchain/randomize` | `POST /api/v2/oracle/vrf/seed` … `prove` / `reveal` / `verify` | |
 | Optional unbiased integer sampling | Randomize | — (API only) | `POST /api/v2/protect/secure-random` (`type=integer`) | |
-| Deterministic selection from seed | Prove (algorithm) | **gap** | **gap** | No server-side shuffle or `select-committee` API |
-| **gap** — Output → committee slots | Prove | — | — | Undocumented mapping from VRF `output` to roster indices |
-| **gap** — Home pillar naming | — | `/` (**oracle / protect / rng**) vs `/blockchain/*` (**Prove / Protect / Randomize**) | — | Copy bridge needed for integrated narrative |
+| Deterministic selection from seed | Prove (algorithm) | `/` oracle tab (via select-committee) | `POST /api/v2/oracle/select-committee` | Fisher-Yates from VRF output; reproducible |
+| **resolved** — Output → committee slots | Prove | — | `POST /api/v2/oracle/select-committee` | M3 fix: documented algorithm, deterministic, auditable |
+| **resolved** — Home pillar naming | — | `/` (**Prove / Protect / Randomize**) ↔ `/blockchain/*` (**Prove / Protect / Randomize**) | — | M3 fix: unified naming, `PillarBridgeCallout` updated |
 
 ### Composed user journey (recommended order)
 
 1. **Attest the pool** — Hash and optionally PQC-sign the roster on `/blockchain/prove` or protect surfaces. *Pillar: Prove (+ Protect).*
 2. **Bind randomness to the round** — VRF `seed` → `prove` with round ID in proof input on `/blockchain/randomize`. *Pillar: Randomize + Prove.*
 3. **Reveal and verify** — `reveal` + `verify` to obtain auditable output. *Pillar: Prove.*
-4. **Select committee members** — **Manual / external:** apply a documented deterministic shuffle or sampling algorithm to roster + verified output (no first-class UI or API). *Pillar: Prove (algorithm) — **gap**.*
+4. **Select committee members** — Call `POST /api/v2/oracle/select-committee` with the verified VRF `output`, the roster, and desired size. The endpoint runs a deterministic Fisher-Yates shuffle seeded by the VRF output and returns the selected members plus their original indices. *Pillar: Prove (algorithm).*
 
-**Demonstrability today:** Roster attestation + VRF beacon are demonstrable; **selection step is not** in product.
+**Demonstrability today:** Full end-to-end flow is in product — roster attestation → VRF beacon → reproducible committee selection.
 
 **RNG methodology:** Binding randomness (`/oracle/vrf/*`), optional `POST /protect/secure-random`, and committee audit limits — [`../RNG_METHODOLOGY.md`](../RNG_METHODOLOGY.md).
 
 ---
 
-## Cross-scenario gaps (M3 blockers)
+## Cross-scenario gaps (M3 status)
 
-| Gap | Affects | Impact |
+| Gap | Affects | Status |
 |-----|---------|--------|
-| No scenario wizard or single URL | A, B, C | Internal users must know tab composition |
-| VRF / oracle persistence | A, C | In-memory VRF; `/oracle/request` not paired with stored reveal |
-| Committee selection API/UI | C | M3 “committee scenario” incomplete without algorithm + UI |
-| ProtectVault missing decrypt | B | Blockchain sealed-bid story incomplete |
-| Home vs blockchain pillar naming | A, B, C | Prove/Protect/Randomize copy inconsistent on `/` |
+| No scenario wizard or single URL | A, B, C | **Partial** — `/scenarios/{slug}` pages exist with step lists; interactive guided wizard not yet shipped |
+| VRF / oracle persistence | A, C | **Open** — VRF in-memory only; `/oracle/request` not paired with stored reveal |
+| Committee selection API/UI | C | **Resolved (M3)** — `POST /api/v2/oracle/select-committee` ships deterministic Fisher-Yates from VRF output |
+| ProtectVault missing decrypt | B | **Open** — blockchain sealed-bid story still partial |
+| Home vs blockchain pillar naming | A, B, C | **Resolved (M3)** — home tabs now use **Prove / Protect / Randomize** |
 
 ---
 

@@ -66,22 +66,22 @@ See also [`BUILD_SCOPE.md`](./BUILD_SCOPE.md) for theme definitions and [`SPRINT
 - UX flows for three flagship scenarios ([`BUILD_SCOPE.md`](./BUILD_SCOPE.md)); exact routes verified in code.
 - Blockchain tab Prove/Protect experiences meet randomness **clarity bar** (per [`AGENTS.md`](../../AGENTS.md)).
 
-### Audit status (Sprint 5 — docs only)
+### Audit status (Sprint 5 — docs + code fixes)
 
 | Criterion | Status |
 |-----------|--------|
 | Documented steps + verified UI/API mappings | **Done** in [`../scenarios/FLAGSHIP_SCENARIOS.md`](../scenarios/FLAGSHIP_SCENARIOS.md) and BUILD_SCOPE scenario sections |
 | Demonstrable **per primitive** (VRF, encrypt/hash, roster attestation) | **Yes** — compose via `/` tabs + `/blockchain/*` |
-| Single scenario wizard or one URL | **Gap** |
-| Committee selection algorithm + UI | **Gap** |
+| Single scenario wizard or one URL | **Partial** — `/scenarios/{slug}` pages exist with step lists; interactive wizard not yet shipped |
+| Committee selection algorithm + UI | **Done** — `POST /api/v2/oracle/select-committee` (Fisher-Yates from VRF output) |
 | Sealed bid decrypt on `/blockchain/protect` | **Gap** (home protect tab can decrypt) |
-| Consistent Prove/Protect/Randomize copy on home vs blockchain | **Partial gap** (oracle/protect/rng vs Prove/Protect/Randomize) |
+| Consistent Prove/Protect/Randomize copy on home vs blockchain | **Done** — home tabs now use **Prove / Protect / Randomize**; `PillarBridgeCallout` updated |
 | Internal user completes one scenario without engineering help | **Not yet** — needs guided shell or runbook walkthrough |
 
 ### Exit criteria
 
 - [x] Each flagship scenario has **documented steps** + verified UI entry points (no placeholders in **internal** runbooks).
-- [ ] Copy consistently labels Prove vs Protect vs Randomize along the flow.
+- [x] Copy consistently labels Prove vs Protect vs Randomize along the flow.
 - [ ] Usability snapshot: target user can complete one scenario without engineering help (internal test script).
 
 **PO owner (role):** **UX/Scenario PO**

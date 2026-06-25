@@ -21,7 +21,7 @@ class Settings(BaseSettings):
     # Application Info
     app_name: str = Field(default="QCrypt RNG", env="APP_NAME")
     app_version: str = Field(default="2.0.0", env="APP_VERSION")
-    debug: bool = Field(default=True, env="DEBUG")
+    debug: bool = Field(default=False, env="DEBUG")
     environment: str = Field(default="development", env="ENVIRONMENT")
 
     # API Configuration
@@ -29,7 +29,7 @@ class Settings(BaseSettings):
     api_port: int = Field(default=8000, env="API_PORT")
     api_prefix: str = Field(default="/api/v2", env="API_PREFIX")
     allowed_origins: List[str] = Field(
-        default=["http://localhost:3000", "http://localhost:8501"],
+        default=["http://localhost:3000"],
         env="ALLOWED_ORIGINS"
     )
 
@@ -135,12 +135,15 @@ class Settings(BaseSettings):
     @field_validator("secret_key", mode='before')
     @classmethod
     def validate_secret_key(cls, v):
-        """Ensure secret key is secure in production"""
+        """Ensure secret key meets minimum security requirements.
+
+        - Must be at least 32 characters.
+        - The placeholder value is allowed in non-production only;
+          production startup (see app.main lifespan) rejects it.
+        """
         if v == "your-secret-key-here-change-in-production":
-            # For this validator, we'll just return the value and handle the check elsewhere
-            # since we can't access other fields directly in a 'before' validator
             return v
-        elif len(v) < 32:
+        if len(v) < 32:
             raise ValueError("Secret key must be at least 32 characters")
         return v
 

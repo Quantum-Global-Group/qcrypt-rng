@@ -378,7 +378,7 @@ async def batch_request_quantum_randomness(request: BatchOracleRequest):
         return BaseResponse(
             status=ResponseStatus.SUCCESS,
             request_id=f"batch_{int(time.time() * 1_000_000)}",
-            data=items,
+            data={"requests": items, "total": count},
             metadata=meta,
         )
     except Exception as e:
